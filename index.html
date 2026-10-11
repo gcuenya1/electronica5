@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Electrónica General 5.º</title>
+  <meta name="description" content="Teoría, simulaciones y ejercicios de Electrónica General para 5.º año.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230b6e69'/><path d='M4 16h6l3-7 6 14 3-7h6' stroke='white' stroke-width='3' fill='none' stroke-linejoin='round'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo">E5</div>
+        <div><b>Electrónica General</b><small>5.º año · clases particulares</small></div>
+      </div>
+      <a href="#/" class="btn chico" style="margin:0 4px 10px">Inicio</a>
+      <ul class="lista-temas" id="lista-temas"></ul>
+      <div class="side-foot">
+        <button class="btn chico" id="btn-tema" title="Cambiar claro/oscuro" aria-label="Cambiar claro/oscuro"></button>
+        <button class="btn chico" id="btn-docente">Soy docente</button>
+      </div>
+    </aside>
+    <main class="main">
+      <div class="topbar">
+        <button class="btn chico menu-btn" id="btn-menu" aria-label="Menú"></button>
+        <span class="tema-tag" id="modo-txt" style="background:var(--accent-soft);color:var(--accent)">Alumno</span>
+      </div>
+      <div id="banners"></div>
+      <div id="vista"></div>
+    </main>
+  </div>
+
+  <script defer src="vendor/katex/katex.min.js"></script>
+  <script defer src="vendor/katex/contrib/auto-render.min.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/api.js"></script>
+  <!-- Temas: un archivo por tema -->
+  <script src="js/temas/01-metodos-lineales.js"></script>
+  <script src="js/temas/02-armonicos.js"></script>
+  <script src="js/temas/03-area-integrales.js"></script>
+  <script src="js/temas/04-pwm.js"></script>
+  <script src="js/temas/05-instrumentos.js"></script>
+  <script src="js/temas/06-osciloscopio.js"></script>
+  <script src="js/temas/07-termistores.js"></script>
+  <script src="js/temas/08-ldr.js"></script>
+  <script src="js/temas/09-diodos.js"></script>
+  <script src="js/temas/10-leds.js"></script>
+  <script src="js/temas/11-rectificadores.js"></script>
+  <script src="js/temas/12-filtrado.js"></script>
+  <script src="js/temas/13-zener.js"></script>
+  <script src="js/temas/14-transistores.js"></script>
+  <script src="js/temas/15-mosfet.js"></script>
+  <script src="js/temas/16-tiristores.js"></script>
+  <script defer src="js/app.js"></script>
+</body>
+</html>

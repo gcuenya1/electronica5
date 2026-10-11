@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel Docente</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b45309'/><path d='M4 16h6l3-7 6 14 3-7h6' stroke='white' stroke-width='3' fill='none' stroke-linejoin='round'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="panel-wrap">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <div class="brand-logo" style="background:var(--amber)">E5</div>
+      <div style="flex:1"><h1 style="margin:0;font-size:1.5rem">Panel docente</h1>
+        <small style="color:var(--muted)">Habilitá los temas a medida que avanzan. El alumno ve los cambios en unos segundos, sin recargar.</small></div>
+      <a class="btn" href="index.html">Ir al sitio</a>
+    </div>
+
+    <div class="panel-card" id="login">
+      <h2 style="margin-top:0">Ingresar</h2>
+      <p>Escribí la clave docente (la que configuraste en Netlify como <code>DOCENTE_PASSWORD</code>).</p>
+      <form id="form-login" style="display:flex;gap:8px;flex-wrap:wrap">
+        <input class="campo" style="max-width:280px" type="password" id="clave" placeholder="Clave" autocomplete="current-password" required>
+        <button class="btn primario" type="submit">Entrar</button>
+      </form>
+      <p class="estado-guardado err" id="login-err"></p>
+    </div>
+
+    <div id="panel" hidden>
+      <div class="panel-card">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn" id="todos-on">Habilitar todos</button>
+          <button class="btn" id="todos-off">Ocultar todos</button>
+          <button class="btn" id="sol-off">Ocultar todas las soluciones</button>
+          <span style="flex:1"></span>
+          <a class="btn primario" href="index.html">Abrir sitio en modo docente</a>
+          <button class="btn peligro" id="salir">Cerrar sesión</button>
+        </div>
+        <p class="estado-guardado" id="guardado" style="margin:10px 0 0">Los cambios se guardan automáticamente.</p>
+      </div>
+
+      <div class="panel-card">
+        <h2 style="margin-top:0">Aviso para el alumno</h2>
+        <p style="color:var(--muted);margin-top:0">Aparece arriba de todo en el sitio (por ejemplo: “Para el jueves: ejercicios 3 y 4 de rectificadores”). Dejalo vacío para no mostrar nada.</p>
+        <textarea class="campo" id="aviso" rows="2" maxlength="400" placeholder="Mensaje opcional…"></textarea>
+        <div style="margin-top:8px"><button class="btn" id="guardar-aviso">Guardar aviso</button></div>
+      </div>
+
+      <div class="panel-card">
+        <h2 style="margin-top:0">Temas</h2>
+        <div class="tabla-wrap">
+          <table class="panel-tabla">
+            <thead><tr><th>#</th><th>Tema</th><th>Visible</th><th>Soluciones</th><th>Foco hoy</th><th></th></tr></thead>
+            <tbody id="filas"></tbody>
+          </table>
+        </div>
+        <p style="color:var(--muted);font-size:.88rem">
+          <b>Visible:</b> el alumno puede abrir el tema. <b>Soluciones:</b> se muestran las resoluciones de los ejercicios (las pistas siempre se ven).
+          <b>Foco hoy:</b> el alumno ve un aviso “Ahora estamos viendo…” con un botón para ir directo.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/core.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/temas/01-metodos-lineales.js"></script>
+  <script src="js/temas/02-armonicos.js"></script>
+  <script src="js/temas/03-area-integrales.js"></script>
+  <script src="js/temas/04-pwm.js"></script>
+  <script src="js/temas/05-instrumentos.js"></script>
+  <script src="js/temas/06-osciloscopio.js"></script>
+  <script src="js/temas/07-termistores.js"></script>
+  <script src="js/temas/08-ldr.js"></script>
+  <script src="js/temas/09-diodos.js"></script>
+  <script src="js/temas/10-leds.js"></script>
+  <script src="js/temas/11-rectificadores.js"></script>
+  <script src="js/temas/12-filtrado.js"></script>
+  <script src="js/temas/13-zener.js"></script>
+  <script src="js/temas/14-transistores.js"></script>
+  <script src="js/temas/15-mosfet.js"></script>
+  <script src="js/temas/16-tiristores.js"></script>
+  <script src="js/docente.js"></script>
+</body>
+</html>
