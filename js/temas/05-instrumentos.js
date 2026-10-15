@@ -193,6 +193,59 @@ El instrumento “ve” la resistencia de Thévenin del circuito entre las punta
 <li><b>Generador de funciones:</b> produce señales senoidales, cuadradas y triangulares de frecuencia, amplitud y <em>offset</em> (nivel de continua) ajustables. Su salida suele tener 50 Ω de resistencia interna.</li>
 <li><b>Osciloscopio:</b> muestra la forma de la tensión en función del tiempo. Es el tema siguiente.</li>
 </ul>
+
+<!-- AMPLIACION-CARPETA -->
+<h2>12. Instrumentos analógicos por dentro: ¿qué mide cada uno?</h2>
+<p>Antes de los multímetros digitales, todo se medía con instrumentos de <b>aguja</b>. Todavía se usan en tableros, fuentes y laboratorios, y lo importante es saber que, según cómo están construidos, <b>no todos marcan lo mismo</b> frente a la misma señal. Hay tres tipos clásicos:</p>
+<div class="tabla-wrap"><table class="tabla">
+<tr><th>Tipo</th><th>Cómo funciona (idea)</th><th>La fuerza es proporcional a…</th><th>Qué marca</th><th>Sirve para</th></tr>
+<tr><td><b>Bobina móvil</b><br><small>(imán permanente)</small></td><td>Una bobinita liviana gira entre los polos de un imán. Si cambia el sentido de la corriente, la aguja quiere ir para el otro lado.</td><td>$i$ (la corriente instantánea)</td><td>El <b>valor medio</b>. En alterna pura, marca 0 (la aguja vibra y queda quieta).</td><td>Continua (V⎓, A⎓). Para alterna necesita un <b>rectificador</b> y una escala calibrada para senoidal (×1,11).</td></tr>
+<tr><td><b>Hierro móvil</b></td><td>Dos piezas de hierro dentro de una bobina se magnetizan igual y se <b>repelen</b>, sin importar el sentido de la corriente.</td><td>$i^2$</td><td>El <b>valor eficaz verdadero</b> (de continua + alterna).</td><td>Alterna y continua. Muy usado en tableros de 220 V. Escala no lineal (apretada al principio).</td></tr>
+<tr><td><b>Electrodinámico</b></td><td>Como la bobina móvil, pero el imán se reemplaza por una bobina fija. Hay dos corrientes en juego: la de la bobina fija y la de la móvil.</td><td>$i_1\cdot i_2$</td><td>El eficaz, o el producto de dos señales.</td><td>Es el <b>vatímetro</b>: una bobina lleva la corriente y la otra la tensión → marca la potencia $P$.</td></tr>
+</table></div>
+<div class="caja idea"><span class="caja-titulo">La regla para recordar</span>
+<b>Bobina móvil → valor medio</b> (lo que marca un tester en V⎓). <b>Hierro móvil → valor eficaz total</b>. <b>Digital “común” en V~ → medio rectificado × 1,11</b> (solo acierta con senoidales). <b>Digital True RMS en V~ → eficaz de la parte alterna</b> (le saca la continua).
+</div>
+${Esq.svg(420, 150, [
+  Esq.texto(70, 20, 'Símbolos en el dial', { size: 12 }),
+  '<path d="M30 70h80" stroke="currentColor" stroke-width="2" fill="none"/><path d="M45 50h50v40h-50z" stroke="currentColor" stroke-width="2" fill="none"/><path d="M70 50v40" stroke="currentColor" stroke-width="2"/>',
+  Esq.texto(70, 115, 'bobina móvil', { size: 11, peso: 400 }),
+  '<path d="M190 55c0 -15 30 -15 30 0v30c0 15 -30 15 -30 0z" stroke="currentColor" stroke-width="2" fill="none"/><path d="M205 45v50" stroke="currentColor" stroke-width="3"/>',
+  Esq.texto(205, 115, 'hierro móvil', { size: 11, peso: 400 }),
+  '<circle cx="330" cy="70" r="22" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="330" cy="70" r="12" stroke="currentColor" stroke-width="2" fill="none"/>',
+  Esq.texto(330, 115, 'electrodinámico', { size: 11, peso: 400 }),
+], 'Los instrumentos de aguja traen impreso en el dial un símbolo que indica su tipo (dibujos simplificados).')}
+
+<h2>13. Señales con continua y alterna: $V^2=V_{CC}^2+V_{CA}^2$</h2>
+<p>Muchas señales reales tienen <b>las dos cosas a la vez</b>: un nivel de continua (su valor medio) y una parte que varía (la alterna). Por ejemplo, la salida de un rectificador o una señal PWM. Se pueden separar así:</p>
+<div class="caja formula"><span class="caja-titulo">Eficaz total, continua y alterna</span>
+$$V^2=V_{CC}^2+V_{CA}^2\qquad\Longrightarrow\qquad V_{CA}=\sqrt{V^2-V_{CC}^2}$$
+<ul>
+<li>$V$: eficaz <b>total</b> (lo que marca un hierro móvil o un True RMS “AC+DC”).</li>
+<li>$V_{CC}$: valor <b>medio</b> (lo que marca cualquier instrumento en V⎓).</li>
+<li>$V_{CA}$: eficaz de la <b>parte alterna</b> (lo que marca un True RMS en V~, porque tiene un capacitor que bloquea la continua).</li>
+</ul>
+<p>Es como el teorema de Pitágoras: la continua y la alterna son los catetos y el eficaz total es la hipotenusa.</p>
+</div>
+<div class="caja ejemplo"><span class="caja-titulo">Ejemplo de la carpeta: diente de sierra de 0 a A</span>
+${Esq.svg(370, 110, [
+  '<path d="M20 90H285M30 100V15" stroke="currentColor" stroke-width="1.5" fill="none"/>',
+  '<path d="M30 90L110 30V90L190 30V90L270 30V90" style="stroke:var(--c1)" stroke-width="2.5" fill="none"/>',
+  '<path d="M30 60H285" style="stroke:var(--c2)" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>',
+  Esq.texto(22, 34, 'A', { size: 12, anchor: 'end' }), Esq.texto(292, 64, 'Vcc = A/2', { size: 11, anchor: 'start', color: 'var(--c2)' }),
+  Esq.texto(110, 105, 'T', { size: 11 }),
+])}
+Valor medio (es un triángulo): $V_{CC}=\frac{A}{2}$. Eficaz total (de la integral, tema 3): $V=\frac{A}{\sqrt3}$. Entonces:
+$$V_{CA}^2=V^2-V_{CC}^2=\frac{A^2}{3}-\frac{A^2}{4}=\frac{A^2}{12}\qquad\Rightarrow\qquad V_{CA}=\frac{A}{\sqrt{12}}=\frac{A}{2\sqrt3}\approx0{,}289\,A$$
+Con $A=6\,\text{V}$: el tester en V⎓ marca 3 V, un hierro móvil marca 3,46 V y un True RMS en V~ marca 1,73 V. <b>Las tres lecturas son correctas</b>: cada instrumento mide una cosa distinta.
+</div>
+<div class="caja ejemplo"><span class="caja-titulo">Ejemplo: cuadrada (PWM) de 0 a A con ciclo de trabajo D</span>
+$$V_{CC}=A\cdot D\qquad V=A\sqrt D\qquad V_{CA}=A\sqrt{D-D^2}=A\sqrt{D(1-D)}$$
+Con $A=12\,\text{V}$ y $D=0{,}6$: $V_{CC}=7{,}2\,\text{V}$, $V=9{,}30\,\text{V}$ y $V_{CA}=5{,}88\,\text{V}$.
+</div>
+<div class="caja ojo"><span class="caja-titulo">¿Y el multímetro digital común?</span>
+En V~ también bloquea la continua, pero no calcula el eficaz: rectifica, promedia y multiplica por 1,11. Con la cuadrada del ejemplo marcaría 6,40 V en vez de 5,88 V (+9 %). En la simulación 4 podés ver el error para cada forma de onda.
+</div>
 `,
 
   simulaciones: [
@@ -642,7 +695,78 @@ El instrumento “ve” la resistencia de Thévenin del circuito entre las punta
         upd();
       },
     },
-  ],
+    {
+      titulo: '¿Qué marca cada instrumento? La misma señal, siete lecturas',
+      descripcion: 'Elegí una forma de onda, su amplitud y un nivel de continua (offset). A la derecha ves qué marcaría cada tipo de instrumento y cuánto se aleja del valor que realmente mide.',
+      montar(cont, H) {
+          const nL = (x, d) => H.num(x, d).replace(',', '{,}');
+        const { controles, vista } = H.layout(cont);
+        const forma = H.select(controles, {
+          label: 'Forma de onda', value: 'sierra', onChange: upd,
+          opciones: [{ v: 'sen', t: 'Senoidal' }, { v: 'media', t: 'Senoidal rectificada (media onda)' }, { v: 'comp', t: 'Senoidal rectificada (onda completa)' }, { v: 'cuad', t: 'Cuadrada / PWM de 0 a A' }, { v: 'tri', t: 'Triangular ±A' }, { v: 'sierra', t: 'Diente de sierra de 0 a A' }],
+        });
+        const amp = H.slider(controles, { label: 'Amplitud A (pico)', min: 1, max: 20, step: 0.5, value: 6, unidad: 'V', onInput: upd });
+        const dc = H.slider(controles, { label: 'Offset (continua agregada)', min: -10, max: 10, step: 0.5, value: 0, fmt: v => H.num(v, 1) + ' V', onInput: upd });
+        const duty = H.slider(controles, { label: 'Ciclo de trabajo D (cuadrada)', min: 0.05, max: 0.95, step: 0.05, value: 0.6, fmt: v => H.num(v * 100, 0) + ' %', onInput: upd });
+        H.nota(controles, '<b>Referencias:</b> V⎓ = valor medio. Eficaz total = $\\sqrt{\\overline{v^2}}$. Parte alterna = $\\sqrt{V^2-V_{CC}^2}$.');
+        const cv = H.canvas(vista, { alto: 230, dibujar });
+        const lec = H.lecturas(vista);
+        const nota = H.nota(vista, '');
+        const N = 4000;
+        let R = {};
+        const onda = (u) => {
+          const A = amp.value, B = dc.value, s = Math.sin(2 * Math.PI * u);
+          let v;
+          switch (forma.value) {
+            case 'sen': v = A * s; break;
+            case 'media': v = Math.max(0, A * s); break;
+            case 'comp': v = Math.abs(A * s); break;
+            case 'cuad': v = u < duty.value ? A : 0; break;
+            case 'tri': v = A * (u < 0.25 ? 4 * u : u < 0.75 ? 2 - 4 * u : 4 * u - 4); break;
+            default: v = A * u;
+          }
+          return v + B;
+        };
+        function calcular() {
+          let s = 0, s2 = 0, sa = 0;
+          const vals = [];
+          for (let i = 0; i < N; i++) { const v = onda((i + 0.5) / N); vals.push(v); s += v; s2 += v * v; sa += Math.abs(v); }
+          const med = s / N, ef = Math.sqrt(s2 / N), ca = Math.sqrt(Math.max(0, ef * ef - med * med));
+          let sac = 0; for (const v of vals) sac += Math.abs(v - med);
+          const K = Math.PI / (2 * Math.SQRT2);
+          return { med, ef, ca, bobRect: K * sa / N, digCom: K * sac / N, vals };
+        }
+        function dibujar(ctx, w, h) {
+          const vmx = Math.max(...R.vals, 0.5), vmn = Math.min(...R.vals, 0);
+          const m = (vmx - vmn) * 0.12 + 0.2;
+          const P = H.ejes(ctx, w, h, { xmin: 0, xmax: 2, ymin: vmn - (vmn < 0 ? m : 0), ymax: vmx + m, xlabel: 't / T', ylabel: 'v [V]' });
+          P.fn(x => onda(x % 1), { color: H.col('c1'), ancho: 2.5, n: 800 });
+          P.hline(R.med, { color: H.col('c2'), label: 'Vcc = ' + H.num(R.med, 2) + ' V' });
+          P.hline(R.ef, { color: H.col('c3'), label: 'V eficaz = ' + H.num(R.ef, 2) + ' V', labelX: 1.1 });
+        }
+        const err = (x, ref) => (Math.abs(ref) < 1e-6 ? '' : ' — error ' + (x >= ref ? '+' : '') + H.num((x / ref - 1) * 100, 1) + ' %');
+        function upd() {
+          duty.el.style.display = forma.value === 'cuad' ? '' : 'none';
+          R = calcular();
+          const n = (x) => H.num(x, 2) + ' V';
+          const ok = (x, ref) => Math.abs(x - ref) <= 0.01 * Math.max(1e-6, Math.abs(ref)) ? 'ok' : 'alerta';
+          lec.set([
+            { k: 'Bobina móvil en V⎓ (valor medio)', v: n(R.med) },
+            { k: 'Bobina móvil + rectificador en V~' + err(R.bobRect, R.ef), v: n(R.bobRect), estado: ok(R.bobRect, R.ef) },
+            { k: 'Hierro móvil (eficaz total)', v: n(R.ef), estado: 'ok' },
+            { k: 'Electrodinámico (eficaz total)', v: n(R.ef), estado: 'ok' },
+            { k: 'Digital común en V~' + err(R.digCom, R.ca), v: n(R.digCom), estado: ok(R.digCom, R.ca) },
+            { k: 'Digital True RMS en V~ (parte alterna)', v: n(R.ca), estado: 'ok' },
+            { k: 'True RMS “AC+DC” (eficaz total)', v: n(R.ef), estado: 'ok' },
+          ]);
+          nota.innerHTML = `<b>Comprobación:</b> $V^2=V_{CC}^2+V_{CA}^2$ → $${H.num(R.ef, 2).replace(',', '{,}')}^2 = ${H.num(R.med, 2).replace(',', '{,}')}^2 + ${H.num(R.ca, 2).replace(',', '{,}')}^2$. Los porcentajes en naranja son el error de los instrumentos que “adivinan” el eficaz multiplicando el valor medio rectificado por 1,11: el de aguja con rectificador se compara con el eficaz total y el digital común (que bloquea la continua) con la parte alterna. Solo aciertan con una senoidal sin continua.`;
+          if (window.renderMathInElement) renderMathInElement(nota, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
+          cv.redibujar();
+        }
+        upd();
+      },
+    },
+    ],
 
   ejercicios: [
     {
@@ -692,7 +816,37 @@ El instrumento “ve” la resistencia de Thévenin del circuito entre las punta
       solucion: String.raw`Cuadrada: valor medio rectificado = 10 V → muestra $1{,}11\cdot10=11{,}1\,\text{V}$; eficaz real = 10 V (error +11 %).<br>
       Senoidal: valor medio rectificado $=\frac{2}{\pi}\cdot10=6{,}37\,\text{V}$ → muestra $1{,}11\cdot6{,}37=7{,}07\,\text{V}$, que coincide con $10/\sqrt2=7{,}07\,\text{V}$: con senoidal no hay error.`,
     },
-  ],
+    {
+      nivel: 'Básico',
+      enunciado: String.raw`Una señal diente de sierra va de 0 a $6\,\text{V}$. ¿Qué marca: a) un tester de aguja (bobina móvil) en V⎓; b) un instrumento de hierro móvil; c) un multímetro True RMS en V~?`,
+      pista: String.raw`$V_{CC}=A/2$, $V=A/\sqrt3$ y $V_{CA}=\sqrt{V^2-V_{CC}^2}=A/(2\sqrt3)$.`,
+      solucion: String.raw`a) $V_{CC}=3\,\text{V}$. b) $V=\frac{6}{\sqrt3}=3{,}46\,\text{V}$. c) $V_{CA}=\frac{6}{2\sqrt3}=1{,}73\,\text{V}$. Verificación: $3{,}46^2=3^2+1{,}73^2=12$ ✓.`,
+    },
+    {
+      nivel: 'Básico',
+      enunciado: String.raw`Relacioná cada instrumento con lo que mide: bobina móvil, hierro móvil, electrodinámico. ¿Cuál usarías para medir la <b>potencia</b> que consume una estufa?`,
+      pista: String.raw`Pensá a qué es proporcional la fuerza que mueve la aguja: $i$, $i^2$ o $i_1\cdot i_2$.`,
+      solucion: String.raw`Bobina móvil ∝ $i$ → valor medio (continua). Hierro móvil ∝ $i^2$ → valor eficaz. Electrodinámico ∝ $i_1\cdot i_2$ → si una bobina lleva la corriente y la otra la tensión, mide la potencia: es el <b>vatímetro</b>. Para la estufa, el electrodinámico.`,
+    },
+    {
+      nivel: 'Intermedio',
+      enunciado: String.raw`Una señal PWM va de 0 a $12\,\text{V}$ con $D=60\,\%$. Calculá $V_{CC}$, el eficaz total y el eficaz de la parte alterna. ¿Qué mostraría un multímetro digital <b>común</b> (no True RMS) en V~?`,
+      pista: String.raw`$V_{CC}=A\,D$, $V=A\sqrt D$. El digital común, con la continua bloqueada, ve una cuadrada entre $-A\,D$ y $A(1-D)$; su valor medio rectificado es $2AD(1-D)$, y lo multiplica por 1,11.`,
+      solucion: String.raw`$V_{CC}=12\cdot0{,}6=7{,}2\,\text{V}$; $V=12\sqrt{0{,}6}=9{,}30\,\text{V}$; $V_{CA}=\sqrt{9{,}30^2-7{,}2^2}=5{,}88\,\text{V}$. Digital común: $1{,}11\cdot2\cdot12\cdot0{,}6\cdot0{,}4=1{,}11\cdot5{,}76=6{,}40\,\text{V}$ → error de +9 % respecto de 5,88 V. Comprobalo en la simulación 4.`,
+    },
+    {
+      nivel: 'Intermedio',
+      enunciado: String.raw`Medís la salida de un rectificador de media onda sin filtro ($V_p=10\,\text{V}$) con un hierro móvil, con un tester en V⎓ y con un True RMS en V~. ¿Qué marca cada uno?`,
+      pista: String.raw`Media onda: $V_{CC}=V_p/\pi$ y $V=V_p/2$.`,
+      solucion: String.raw`Tester V⎓: $\frac{10}{\pi}=3{,}18\,\text{V}$. Hierro móvil: $\frac{10}{2}=5\,\text{V}$. True RMS V~: $\sqrt{5^2-3{,}18^2}=3{,}86\,\text{V}$.`,
+    },
+    {
+      nivel: 'Avanzado',
+      enunciado: String.raw`Una senoidal de $5\,\text{V}$ de pico está montada sobre una continua de $2\,\text{V}$. Calculá lo que marcan un tester en V⎓, un hierro móvil y un True RMS en V~. ¿Por qué el multímetro digital común acá sí acierta en V~?`,
+      pista: String.raw`$V_{CC}=2\,\text{V}$; la parte alterna es la senoidal: $V_{CA}=5/\sqrt2$.`,
+      solucion: String.raw`V⎓: 2 V. True RMS V~: $\frac{5}{\sqrt2}=3{,}54\,\text{V}$. Hierro móvil: $\sqrt{2^2+3{,}54^2}=4{,}06\,\text{V}$. El digital común bloquea la continua y lo que queda es una senoidal pura, justo la forma para la que está calibrado (×1,11): marca 3,54 V, bien.`,
+    },
+    ],
 
   quiz: [
     { pregunta: '¿Cómo se conecta un voltímetro para medir la tensión sobre una resistencia?', opciones: ['En serie con la resistencia', 'En paralelo con la resistencia', 'En lugar de la resistencia', 'Entre la resistencia y masa, abriendo el circuito'], correcta: 1, explicacion: 'La tensión es una diferencia entre dos puntos: el voltímetro va entre los extremos del componente, en paralelo.' },
@@ -701,7 +855,12 @@ El instrumento “ve” la resistencia de Thévenin del circuito entre las punta
     { pregunta: 'Un voltímetro analógico clase 2,5 con alcance 10 V tiene un error máximo de…', opciones: ['±2,5 % de la lectura', '±0,25 V en toda la escala', '±0,025 V', '±2,5 V'], correcta: 1, explicacion: 'Clase·alcance/100 = 2,5·10/100 = 0,25 V, el mismo en cualquier punto de la escala.' },
     { pregunta: '¿Por qué un voltímetro debe tener una resistencia interna muy alta?', opciones: ['Para no quemarse', 'Para tomar la menor corriente posible y no alterar el circuito (efecto de carga)', 'Para medir corrientes grandes', 'Para que la aguja se mueva más rápido'], correcta: 1, explicacion: 'En paralelo, su resistencia “roba” corriente; cuanto más alta, menos altera la tensión que mide.' },
     { pregunta: 'Un tester común (no True RMS) mide una onda cuadrada. La lectura en V~…', opciones: ['Es exacta', 'Da un 11 % más que el valor eficaz real', 'Da cero', 'Da el valor pico a pico'], correcta: 1, explicacion: 'Mide valor medio y multiplica por 1,11 (factor de la senoidal). En la cuadrada, el medio rectificado ya es igual al eficaz, así que sobra ese 11 %.' },
-  ],
+    { pregunta: 'Un instrumento de bobina móvil conectado a una tensión alterna senoidal pura (sin rectificador) marca…', opciones: ['El valor pico', 'El valor eficaz', 'Cero (el valor medio)', 'El doble del eficaz'], correcta: 2, explicacion: 'La fuerza es proporcional a i: un semiciclo empuja para un lado y el otro para el otro. La aguja se queda en el promedio, que es cero.' },
+    { pregunta: '¿Qué tipo de instrumento de aguja mide el valor eficaz verdadero, en continua y en alterna?', opciones: ['Bobina móvil', 'Hierro móvil', 'Ninguno', 'Solo el digital'], correcta: 1, explicacion: 'En el hierro móvil la fuerza es proporcional a i²: siempre repele, y la aguja indica el valor eficaz.' },
+    { pregunta: 'El vatímetro clásico es un instrumento…', opciones: ['De bobina móvil', 'De hierro móvil', 'Electrodinámico', 'Digital'], correcta: 2, explicacion: 'Tiene dos bobinas: la fuerza es proporcional a i₁·i₂. Si una lleva la corriente y la otra la tensión, mide potencia.' },
+    { pregunta: String.raw`Una señal tiene $V_{CC}=3\,\text{V}$ y su parte alterna vale $4\,\text{V}$ eficaces. Su eficaz total es…`, opciones: ['7 V', '5 V', '1 V', '12 V'], correcta: 1, explicacion: String.raw`$V=\sqrt{3^2+4^2}=5\,\text{V}$. Se suman “en cuadratura”, como los catetos de un triángulo rectángulo.` },
+    { pregunta: 'Un True RMS en V~ sobre un diente de sierra de 0 a A marca…', opciones: ['A/2', 'A/√3', 'A/(2√3) ≈ 0,29·A', 'A'], correcta: 2, explicacion: 'En V~ bloquea la continua (A/2) y mide solo la parte alterna: √(A²/3 − A²/4) = A/√12.' },
+    ],
 
   docente: String.raw`
 <h3>Objetivo de la clase</h3>
@@ -750,5 +909,16 @@ El instrumento “ve” la resistencia de Thévenin del circuito entre las punta
 </ul>
 <h3>Experiencia práctica</h3>
 <p><b>Con tester en casa:</b> medir una pila AA (≈1,5–1,6 V), un cargador de celular (≈5 V), la resistencia de un par de resistores con código de colores (compararlos con la tolerancia), la tensión directa de un LED y de un diodo 1N4007 con la prueba de diodos, y continuidad de un cable. <b>Efecto de carga casero:</b> divisor con dos resistencias de 1 MΩ y una batería de 9 V: el digital marca algo menos de 4,5 V (≈4,29 V con 10 MΩ). <b>En Tinkercad Circuits:</b> el multímetro virtual permite armar el circuito serie y medir V, A y Ω; conviene que lo haga antes de usar uno real.</p>
+
+<h3>Ampliación: tipos de instrumentos y $V^2=V_{CC}^2+V_{CA}^2$ (secciones 12 y 13)</h3>
+<p><b>Por qué está:</b> en la carpeta aparece “H. móvil → V → $V_{CA}+V_{CC}$”, “B. móvil → $\bar V$ → $V_{CC}$”, el electrodinámico, True RMS / “False RMS” y el diente de sierra con $V_{CA}=\frac{A}{2\sqrt3}$. <b>Duración sugerida:</b> 40 min.</p>
+<ol>
+<li><b>Pregunta inicial (5 min):</b> “Medimos la misma señal con tres instrumentos y dan 3 V, 3,46 V y 1,73 V. ¿Cuál está roto?”. Dejalo abierto.</li>
+<li><b>Los tres tipos (10 min):</b> la tabla. La clave está en la columna “fuerza ∝ …”: $i$ promedia (y se anula en alterna), $i^2$ nunca cambia de signo (eficaz), $i_1 i_2$ multiplica (potencia).</li>
+<li><b>Pitágoras de las señales (15 min):</b> deducí el diente de sierra en el pizarrón. Volvé a la pregunta inicial: ¡ninguno estaba roto!</li>
+<li><b>Simulación 4 (10 min):</b> que prueben senoidal sin offset (todos coinciden) y después cuadrada con D = 60 %. Que expliquen por qué el digital común se equivoca.</li>
+</ol>
+<p><b>Errores frecuentes:</b> sumar $V_{CC}+V_{CA}$ directamente; creer que el True RMS en V~ incluye la continua; pensar que el tester de aguja en V⎓ “no anda” con una señal pulsante.</p>
+<p><b>Repaso para vos:</b> factor de forma de la senoidal $\frac{\pi}{2\sqrt2}=1{,}111$. Sierra/triangular 0→A: $V_{CC}=A/2$, $V=A/\sqrt3$, $V_{CA}=0{,}289A$. Cuadrada 0→A con D: $V_{CC}=AD$, $V=A\sqrt D$, $V_{CA}=A\sqrt{D(1-D)}$. Media onda: $V_p/\pi$, $V_p/2$, $0{,}386V_p$. Onda completa: $2V_p/\pi$, $V_p/\sqrt2$, $0{,}308V_p$.</p>
 `,
 });

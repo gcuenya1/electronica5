@@ -224,7 +224,72 @@ ${Esq.svg(340, 175, [
 Los armónicos <b>no se crean</b> en un circuito lineal (resistencias, capacitores, bobinas): un filtro RC puede achicar o agrandar armónicos que ya existen, pero nunca inventa frecuencias nuevas. Los armónicos nuevos aparecen cuando hay <b>componentes no lineales</b>: diodos, transistores saturando, núcleos magnéticos saturados, llaves que conmutan.
 </div>
 
-<h2>8. Cómo se conecta con el resto del curso</h2>
+<!-- AMPLIACION-CARPETA -->
+<h2>8. Filtros: elegir qué armónicos pasan</h2>
+<p>Mirar una señal en el dominio de la frecuencia tiene una ventaja enorme: un <b>filtro</b> es simplemente un circuito que deja pasar algunas “rayas” del espectro y atenúa otras. Según qué parte deja pasar, hay cuatro tipos:</p>
+${(() => {
+  const barras = [1, 2, 3, 4, 5];
+  const alt = [60, 0, 20, 0, 12];
+  const tipos = [
+    ['Pasa bajos', 'deja pasar lo de baja frecuencia', (k) => k <= 1.5, [[0, 1.6]]],
+    ['Pasa altos', 'deja pasar lo de alta frecuencia', (k) => k >= 2.5, [[2.4, 6]]],
+    ['Pasa banda', 'deja pasar solo una franja', (k) => k >= 2.5 && k <= 3.5, [[2.4, 3.6]]],
+    ['Rechaza banda', 'elimina una franja (ej.: zumbido de 50 Hz)', (k) => !(k >= 2.5 && k <= 3.5), [[0, 2.4], [3.6, 6]]],
+  ];
+  const fig = ([nom, desc, pasa, zonas]) => {
+    const X = (k) => 20 + k * 30, y0 = 95;
+    const z = zonas.map(([a, b]) => `<rect x="${X(a)}" y="20" width="${X(Math.min(b, 5.6)) - X(a)}" height="${y0 - 20}" style="fill:var(--accent-soft)"/>`).join('');
+    const bs = barras.map((k, i) => `<line x1="${X(k)}" y1="${y0}" x2="${X(k)}" y2="${y0 - Math.max(alt[i], 0)}" stroke-width="5" style="stroke:${pasa(k) ? 'var(--c1)' : 'var(--muted)'};opacity:${pasa(k) ? 1 : 0.35}"/>`).join('');
+    return `<figure class="figura" style="margin:4px"><svg class="esq" viewBox="0 0 200 125" width="200" height="125">${z}${bs}<path d="M20 ${y0}H190M20 ${y0}V14" stroke="currentColor" stroke-width="1.5" fill="none"/><text x="186" y="${y0 + 14}" font-size="11" text-anchor="end">f</text><text x="${X(1)}" y="${y0 + 14}" font-size="10" text-anchor="middle">f₁</text><text x="${X(3)}" y="${y0 + 14}" font-size="10" text-anchor="middle">3f₁</text><text x="${X(5)}" y="${y0 + 14}" font-size="10" text-anchor="middle">5f₁</text></svg><figcaption><b>${nom}</b>: ${desc}</figcaption></figure>`;
+  };
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:6px;text-align:center">${tipos.map(fig).join('')}</div>`;
+})()}
+<p>En los dibujos, las barras son los armónicos de una <b>onda cuadrada</b> (solo impares: $f_1$, $3f_1$, $5f_1$…) y la zona coloreada es la que el filtro deja pasar.</p>
+<div class="caja ejemplo"><span class="caja-titulo">Ejemplo: una cuadrada de 1 kHz pasa por cada filtro</span>
+<ul>
+<li><b>Pasa bajos que corta en 2 kHz:</b> solo sobrevive la fundamental de 1 kHz → sale una <b>senoidal</b> de 1 kHz.</li>
+<li><b>Pasa altos que corta en 2 kHz:</b> se pierde la fundamental; salen 3, 5, 7 kHz… La señal queda con “picos” en los flancos.</li>
+<li><b>Pasa banda de 2,5 a 3,5 kHz:</b> sale una senoidal de <b>3 kHz</b> (el 3.º armónico), con un tercio de la amplitud de la fundamental. ¡Así se puede “sacar” un armónico de una señal!</li>
+<li><b>Rechaza banda:</b> se usa para eliminar una frecuencia molesta, como el zumbido de 50 Hz de la red en un equipo de audio.</li>
+</ul>
+</div>
+<div class="caja tip"><span class="caja-titulo">¿Dónde aparecen?</span>
+El capacitor de una fuente (tema 12) es un <b>pasa bajos</b>: deja la continua (0 Hz) y frena el rizado de 100 Hz. Los controles de graves y agudos de un equipo de audio son pasa bajos y pasa altos. Una radio usa un <b>pasa banda</b> para quedarse con una sola emisora.
+</div>
+
+<h2>9. Longitud de onda: de la red eléctrica a la radio</h2>
+<p>Cuando una señal viaja (por el aire como onda de radio, por un cable, o como sonido), cada ciclo ocupa un cierto <b>espacio</b>. Esa distancia es la <b>longitud de onda</b> $\lambda$ (letra griega “lambda”): lo que avanza la onda durante un período.</p>
+<div class="caja formula"><span class="caja-titulo">Longitud de onda</span>
+$$\lambda=\frac{v}{f}\qquad\Longleftrightarrow\qquad f\cdot\lambda=v$$
+<p>$v$ = velocidad de propagación [m/s], $f$ = frecuencia [Hz], $\lambda$ en metros.</p>
+<ul>
+<li>Ondas electromagnéticas (radio, luz) en el aire o el vacío: $v=c=3\cdot10^8\,\text{m/s}$ (la velocidad de la luz).</li>
+<li>Señal eléctrica en un cable coaxial: $v\approx0{,}66\,c\approx2\cdot10^8\,\text{m/s}$.</li>
+<li>Sonido en el aire: $v\approx343\,\text{m/s}$ (¡casi un millón de veces más lento!).</li>
+</ul>
+</div>
+<p><b>Cuanto mayor es la frecuencia, más corta es la onda</b>: si $f$ se duplica, $\lambda$ se reduce a la mitad.</p>
+<div class="caja ejemplo"><span class="caja-titulo">Ejemplos (los de la carpeta)</span>
+<b>Radio AM</b> (amplitud modulada) en 1015 kHz:
+$$\lambda_{AM}=\frac{3\cdot10^8\,\text{m/s}}{1015\cdot10^3\,\text{Hz}}=295{,}6\,\text{m}$$
+<b>Radio FM</b> (frecuencia modulada) en 101,5 MHz:
+$$\lambda_{FM}=\frac{3\cdot10^8}{101{,}5\cdot10^6}=2{,}96\,\text{m}$$
+<b>La red eléctrica</b> de 50 Hz: $\lambda=\frac{3\cdot10^8}{50}=6\,000\,\text{km}$. Por eso en un circuito común nunca pensamos en la longitud de onda: el circuito es muchísimo más chico que $\lambda$.
+</div>
+<div class="tabla-wrap"><table class="tabla">
+<tr><th>Señal</th><th>Frecuencia</th><th>λ (en el aire)</th></tr>
+<tr><td>Red eléctrica</td><td>50 Hz</td><td>6 000 km</td></tr>
+<tr><td>Radio AM (onda media)</td><td>530 – 1710 kHz</td><td>570 – 175 m</td></tr>
+<tr><td>Radio FM</td><td>88 – 108 MHz</td><td>3,4 – 2,8 m</td></tr>
+<tr><td>Celular</td><td>700 MHz – 2,6 GHz</td><td>43 – 12 cm</td></tr>
+<tr><td>WiFi</td><td>2,4 GHz / 5 GHz</td><td>12,5 cm / 6 cm</td></tr>
+<tr><td>Luz roja</td><td>≈ 460 THz</td><td>≈ 650 nm</td></tr>
+</table></div>
+<div class="caja idea"><span class="caja-titulo">¿Para qué sirve saberlo? Las antenas</span>
+Una antena funciona bien cuando su tamaño es comparable con la longitud de onda; la más común mide $\lambda/4$ (un cuarto de onda). Para FM: $2{,}96/4\approx0{,}74\,\text{m}$, el largo de la antena telescópica de una radio. Para AM: $296/4=74\,\text{m}$… ¡por eso las emisoras de AM usan torres enormes y las radios usan una antena de ferrite enrollada en vez de un cable estirado!
+</div>
+
+<h2>10. Cómo se conecta con el resto del curso</h2>
 <ul>
 <li><b>Tema 3 (área e integrales):</b> el valor medio es justamente $V_0$, el término constante de la serie. El valor eficaz total se calcula sumando en cuadratura: $V_{rms}=\sqrt{V_0^2+V_{1,rms}^2+V_{2,rms}^2+\dots}$.</li>
 <li><b>Tema 4 (PWM):</b> una señal PWM es continua (lo que queremos) + armónicos en $f_{PWM}$, $2f_{PWM}$… que el filtro (o la inercia del motor) elimina.</li>
@@ -405,6 +470,76 @@ Los armónicos <b>no se crean</b> en un circuito lineal (resistencias, capacitor
           upd();
         },
       },
+      {
+        titulo: 'Longitud de onda: ¿cuánto mide una onda?',
+        descripcion: 'Elegí una frecuencia (o un ejemplo) y el medio por donde viaja. El dibujo muestra dos ciclos con una regla en escala real, y te dice con qué objeto se puede comparar.',
+        montar(cont, H) {
+          const { controles, vista } = H.layout(cont);
+          const MEDIOS = { aire: { v: 3e8, t: 'Aire / vacío (onda de radio o luz)' }, coax: { v: 0.66 * 3e8, t: 'Cable coaxial (0,66·c)' }, sonido: { v: 343, t: 'Sonido en el aire (343 m/s)' } };
+          const EJ = [
+            { t: 'Red eléctrica (50 Hz)', f: 50, m: 'aire' }, { t: 'Nota La del piano (440 Hz, sonido)', f: 440, m: 'sonido' },
+            { t: 'Radio AM 1015 kHz', f: 1015e3, m: 'aire' }, { t: 'Radio FM 101,5 MHz', f: 101.5e6, m: 'aire' },
+            { t: 'Celular 850 MHz', f: 850e6, m: 'aire' }, { t: 'WiFi 2,4 GHz', f: 2.4e9, m: 'aire' }, { t: 'Luz roja (460 THz)', f: 4.6e14, m: 'aire' },
+          ];
+          const ej = H.select(controles, { label: 'Ejemplos', value: '3', opciones: EJ.map((e, i) => ({ v: String(i), t: e.t })), onChange: (v) => { const e = EJ[+v]; frec = e.f; fs.value = e.f; med.value = e.m; upd(); } });
+          let frec = 101.5e6;
+          const fs = H.slider(controles, { label: 'Frecuencia f', min: 1, max: 1e15, log: true, value: frec, unidad: 'Hz', onInput: (v) => { frec = v; upd(); } });
+          const med = H.select(controles, { label: 'Medio', value: 'aire', opciones: Object.entries(MEDIOS).map(([k, o]) => ({ v: k, t: o.t })), onChange: upd });
+          H.nota(controles, String.raw`$\lambda = v/f$: con el mismo medio, si la frecuencia sube 10 veces, la onda es 10 veces más corta.`);
+          const cv = H.canvas(vista, { alto: 210, dibujar });
+          const lec = H.lecturas(vista);
+          const comp = H.nota(vista, '');
+          const REF = [[1.27e7, 'el diámetro de la Tierra'], [7e5, 'la distancia Córdoba – Buenos Aires'], [2e5, 'la distancia Río Cuarto – Córdoba'], [1e4, 'cien cuadras'], [1e3, 'diez cuadras'], [100, 'una cancha de fútbol'], [10, 'un aula'], [1.7, 'una persona'], [0.3, 'una regla escolar'], [0.12, 'un celular'], [0.02, 'una moneda'], [0.005, 'un grano de arroz'], [1e-3, 'un grano de arena'], [7e-5, 'el grosor de un pelo'], [5e-6, 'una bacteria'], [5e-7, 'un virus grande (casi nada)']];
+          const UNI = [[1e3, 'km'], [1, 'm'], [1e-2, 'cm'], [1e-3, 'mm'], [1e-6, 'µm'], [1e-9, 'nm']];
+          const largo = (m) => { for (const [f, u] of UNI) if (m >= f * 0.999) return H.num(m / f, m / f < 10 ? 2 : m / f < 100 ? 1 : 0) + ' ' + u; return H.num(m / 1e-9, 2) + ' nm'; };
+          function banda(f, m) {
+            if (m === 'sonido') return f < 20 ? 'Infrasonido (no se oye)' : f <= 20000 ? 'Sonido audible' : 'Ultrasonido (no se oye)';
+            const B = [[3e3, 'Red eléctrica / audio (ELF–VLF)'], [5.3e5, 'Ondas largas (LF)'], [1.71e6, 'Radio AM (onda media)'], [3e7, 'Onda corta (HF)'], [8.8e7, 'VHF (TV, radioaficionados)'], [1.08e8, 'Radio FM'], [7e8, 'UHF (TV digital)'], [2.4e9, 'Telefonía celular'], [6e9, 'WiFi / Bluetooth / microondas'], [3e11, 'Microondas (radar, satélites)'], [4e14, 'Infrarrojo'], [7.5e14, 'Luz visible'], [Infinity, 'Ultravioleta']];
+            for (const [lim, t] of B) if (f < lim) return t; return '';
+          }
+          function dibujar(ctx, w, h) {
+            const v = MEDIOS[med.value].v, lam = v / frec;
+            // escala de la regla: potencia de 10 "linda" para que 2 ciclos entren
+            const total = 2 * lam;
+            const x0 = 30, x1 = w - 30, yc = 85, A = 45;
+            ctx.strokeStyle = H.col('c1'); ctx.lineWidth = 2.5; ctx.beginPath();
+            for (let i = 0; i <= 400; i++) { const u = i / 400; const x = x0 + (x1 - x0) * u; const y = yc - A * Math.sin(2 * Math.PI * 2 * u); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+            ctx.stroke();
+            // cota de lambda
+            const xa = x0 + (x1 - x0) * 0.25, xb = x0 + (x1 - x0) * 0.75, yl = yc - A - 14;
+            ctx.strokeStyle = H.col('c2'); ctx.fillStyle = H.col('c2'); ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(xa, yl); ctx.lineTo(xb, yl); ctx.stroke();
+            [[xa, 1], [xb, -1]].forEach(([x, s]) => { ctx.beginPath(); ctx.moveTo(x, yl); ctx.lineTo(x + 8 * s, yl - 4); ctx.lineTo(x + 8 * s, yl + 4); ctx.fill(); });
+            ctx.font = '700 13px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('λ = ' + largo(lam), (xa + xb) / 2, yl - 8);
+            // regla
+            const yr = 170; ctx.strokeStyle = H.col('ink'); ctx.fillStyle = H.col('muted'); ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(x0, yr); ctx.lineTo(x1, yr); ctx.stroke();
+            const paso = Math.pow(10, Math.floor(Math.log10(total / 2)));
+            const n = Math.floor(total / paso);
+            ctx.font = '11px sans-serif';
+            for (let k = 0; k <= n; k++) {
+              const x = x0 + (x1 - x0) * (k * paso / total);
+              ctx.beginPath(); ctx.moveTo(x, yr - 6); ctx.lineTo(x, yr + 6); ctx.stroke();
+              if (n <= 12 || k % 2 === 0) ctx.fillText(largo(k * paso).replace(/^0 \S+$/, '0'), x, yr + 18);
+            }
+          }
+          function upd() {
+            const v = MEDIOS[med.value].v, lam = v / frec;
+            lec.set([
+              { k: 'Frecuencia', v: H.fmt(frec, 'Hz') },
+              { k: 'Período T = 1/f', v: H.fmt(1 / frec, 's') },
+              { k: 'Velocidad v', v: v >= 1e8 ? H.num(v / 1e8, 2) + '·10⁸ m/s' : H.num(v, 0) + ' m/s' },
+              { k: 'Longitud de onda λ', v: largo(lam), estado: 'ok' },
+              { k: 'Antena λ/4', v: med.value === 'sonido' ? '—' : largo(lam / 4) },
+            ]);
+            let mejor = REF[0], dmin = Infinity;
+            for (const r of REF) { const d = Math.abs(Math.log10(r[0] / lam)); if (d < dmin) { dmin = d; mejor = r; } }
+            comp.innerHTML = `<b>${banda(frec, med.value)}.</b> Cada ciclo de la onda mide aproximadamente lo mismo que <b>${mejor[1]}</b>.`;
+            cv.redibujar();
+          }
+          upd();
+        },
+      },
     ],
 
     ejercicios: [
@@ -450,6 +585,42 @@ Los armónicos <b>no se crean</b> en un circuito lineal (resistencias, capacitor
         pista: String.raw`Las fundamentales de las tres fases están desfasadas 120° y se cancelan en el neutro. Los 3.º armónicos (desfasados $3\cdot120°=360°$) quedan en fase y se suman.`,
         solucion: String.raw`Cada fase: $I=\sqrt{10^2+6^2}=\sqrt{136}=11{,}7\,\text{A}$.<br>Neutro: las fundamentales suman cero; los 3.º armónicos se suman directamente: $I_N=3\cdot6=18\,\text{A}$ (a 150 Hz).<br>¡El neutro lleva <b>más</b> corriente que cualquier fase (18 A contra 11,7 A)! Si es del mismo calibre, se recalienta, y como el neutro no lleva protección, puede llegar a quemarse. Por eso en instalaciones con muchas cargas electrónicas se sobredimensiona el neutro.`,
       },
+      {
+        nivel: 'Básico',
+        enunciado: String.raw`Una emisora de AM transmite en 1015 kHz y una de FM en 101,5 MHz. Calculá la longitud de onda de cada una. ¿Cuántas veces más larga es la onda de AM?`,
+        pista: String.raw`$\lambda=c/f$ con $c=3\cdot10^8\,\text{m/s}$. Pasá todo a Hz antes de dividir.`,
+        solucion: String.raw`$\lambda_{AM}=\frac{3\cdot10^8}{1{,}015\cdot10^6}=295{,}6\,\text{m}$; $\lambda_{FM}=\frac{3\cdot10^8}{101{,}5\cdot10^6}=2{,}96\,\text{m}$. La de AM es 100 veces más larga, porque su frecuencia es 100 veces menor.`,
+      },
+      {
+        nivel: 'Básico',
+        enunciado: String.raw`¿Cuál es la longitud de onda de la tensión de la red (50 Hz)? ¿Y la de un sonido de 50 Hz (un bajo muy grave)?`,
+        pista: String.raw`Misma frecuencia, distinta velocidad: $c=3\cdot10^8\,\text{m/s}$ para la onda eléctrica y $343\,\text{m/s}$ para el sonido.`,
+        solucion: String.raw`Red: $\lambda=\frac{3\cdot10^8}{50}=6\cdot10^6\,\text{m}=6\,000\,\text{km}$. Sonido: $\lambda=\frac{343}{50}=6{,}86\,\text{m}$. Misma frecuencia, ondas de tamaños completamente distintos: manda la velocidad del medio.`,
+      },
+      {
+        nivel: 'Intermedio',
+        enunciado: String.raw`Calculá el largo de una antena de cuarto de onda ($\lambda/4$) para: a) una radio FM de 100 MHz; b) un router WiFi de 2,4 GHz; c) una radio AM de 1 MHz. ¿Cuál es práctica de construir?`,
+        pista: String.raw`Primero $\lambda=c/f$ y después dividí por 4.`,
+        solucion: String.raw`a) $\lambda=3\,\text{m}$ → $\lambda/4=75\,\text{cm}$ (la antena telescópica). b) $\lambda=12{,}5\,\text{cm}$ → $3{,}1\,\text{cm}$ (las antenitas del router o una pista del circuito impreso). c) $\lambda=300\,\text{m}$ → $75\,\text{m}$: imposible en una radio portátil; por eso usan una antena de ferrite y las emisoras, torres altísimas.`,
+      },
+      {
+        nivel: 'Intermedio',
+        enunciado: String.raw`Por un cable coaxial (velocidad $0{,}66\,c$) viaja una señal de 100 MHz. ¿Cuál es la longitud de onda dentro del cable? ¿Y en el aire?`,
+        pista: String.raw`$v=0{,}66\cdot3\cdot10^8=1{,}98\cdot10^8\,\text{m/s}$.`,
+        solucion: String.raw`En el cable: $\lambda=\frac{1{,}98\cdot10^8}{10^8}=1{,}98\,\text{m}$. En el aire: $3\,\text{m}$. La frecuencia no cambia al pasar de un medio a otro; lo que cambia es la velocidad y, con ella, la longitud de onda.`,
+      },
+      {
+        nivel: 'Intermedio',
+        enunciado: String.raw`Una onda cuadrada de 1 kHz y amplitud $A=10\,\text{V}$ pasa por: a) un pasa bajos ideal que corta en 2 kHz; b) un pasa banda ideal de 2,5 a 3,5 kHz. ¿Qué señal sale en cada caso (forma, frecuencia y amplitud)?`,
+        pista: String.raw`Cuadrada: solo armónicos impares, $V_n=\frac{4A}{n\pi}$.`,
+        solucion: String.raw`a) Solo pasa la fundamental: senoidal de 1 kHz con $V_1=\frac{4\cdot10}{\pi}=12{,}7\,\text{V}$ de pico. b) Solo pasa el 3.º armónico: senoidal de 3 kHz con $V_3=\frac{4\cdot10}{3\pi}=4{,}24\,\text{V}$ de pico.`,
+      },
+      {
+        nivel: 'Avanzado',
+        enunciado: String.raw`Una señal tiene una componente continua de 2 V, una fundamental de 3 V eficaces y un 3.º armónico de 1 V eficaz. ¿Cuánto vale su valor eficaz total? ¿Qué marcaría un multímetro true RMS en V⎓ y en V~?`,
+        pista: String.raw`Los eficaces se suman en cuadratura: $V^2=V_{CC}^2+V_1^2+V_3^2$.`,
+        solucion: String.raw`$V=\sqrt{2^2+3^2+1^2}=\sqrt{14}=3{,}74\,\text{V}$. En V⎓ marca la continua: 2 V. En V~ (true RMS, que bloquea la continua): $\sqrt{3^2+1^2}=3{,}16\,\text{V}$.`,
+      },
     ],
 
     quiz: [
@@ -459,6 +630,11 @@ Los armónicos <b>no se crean</b> en un circuito lineal (resistencias, capacitor
       { pregunta: String.raw`Una señal tiene $V_1=20\,\text{V}$ y un único armónico $V_3=2\,\text{V}$. Su THD es…`, opciones: ['2 %', '10 %', '20 %', '90 %'], correcta: 1, explicacion: 'THD = 2/20 = 0,1 → 10 %.' },
       { pregunta: 'Al sumar cada vez más armónicos de una cuadrada, el sobrepico junto a los saltos (fenómeno de Gibbs)…', opciones: ['Desaparece', 'Se hace más angosto, pero mantiene su altura (≈ 9 % del salto)', 'Crece sin límite', 'Se mueve al centro del semiciclo'], correcta: 1, explicacion: 'Es una propiedad de las series de Fourier en una discontinuidad: el cuernito no baja de altura, solo se angosta.' },
       { pregunta: '¿Cuál de estas cargas genera más armónicos de corriente en la red?', opciones: ['Una estufa de cuarzo (resistiva)', 'Una lámpara incandescente', 'Una fuente de PC con rectificador y capacitor', 'Un capacitor solo'], correcta: 2, explicacion: 'El rectificador con capacitor solo consume corriente en pulsos angostos cerca del pico: una carga no lineal, llena de armónicos impares.' },
+      { pregunta: 'Si la frecuencia de una onda de radio se duplica, su longitud de onda…', opciones: ['Se duplica', 'Se reduce a la mitad', 'No cambia', 'Se cuadruplica'], correcta: 1, explicacion: 'λ = c/f: son inversamente proporcionales.' },
+      { pregunta: '¿Cuál es aproximadamente la longitud de onda de una emisora de FM (100 MHz)?', opciones: ['3 mm', '3 cm', '3 m', '300 m'], correcta: 2, explicacion: 'λ = 3·10⁸ / 10⁸ = 3 m. Las de AM (≈ 1 MHz) miden unos 300 m.' },
+      { pregunta: 'El capacitor de filtro de una fuente se comporta como un filtro…', opciones: ['Pasa altos', 'Pasa bajos', 'Pasa banda', 'Rechaza banda'], correcta: 1, explicacion: 'Deja pasar la continua (0 Hz) y atenúa el rizado de 100 Hz y sus armónicos.' },
+      { pregunta: 'Una onda cuadrada de 1 kHz pasa por un pasa bajos ideal que corta en 1,5 kHz. A la salida hay…', opciones: ['Una cuadrada de 1 kHz', 'Una senoidal de 1 kHz', 'Una senoidal de 3 kHz', 'Nada'], correcta: 1, explicacion: 'Solo la fundamental está por debajo de 1,5 kHz: sale una senoidal pura de 1 kHz.' },
+      { pregunta: '¿Por qué en los circuitos de una fuente de 50 Hz no hace falta pensar en la longitud de onda?', opciones: ['Porque no hay ondas', 'Porque λ = 6000 km es enorme comparada con el circuito', 'Porque la luz es más rápida', 'Porque el cable es de cobre'], correcta: 1, explicacion: 'Si el circuito mide centímetros y la onda miles de km, la tensión es prácticamente la misma en todo el cable en cada instante.' },
     ],
 
     docente: String.raw`
@@ -515,6 +691,16 @@ Los armónicos <b>no se crean</b> en un circuito lineal (resistencias, capacitor
 <li><b>Falstad circuit</b> (falstad.com/circuit): generador de cuadrada de 1 kHz → filtro RC pasa bajos de 1,6 kHz (R = 1 kΩ, C = 100 nF) → osciloscopio. Se ve cómo se “redondea” la cuadrada. Con dos RC en cascada queda casi senoidal.</li>
 <li>Si tiene osciloscopio digital con FFT (o una app de osciloscopio por la entrada de audio de la PC), mirar el espectro de una cuadrada generada por un Arduino con <code>tone(8, 500)</code>: rayas en 500, 1500, 2500 Hz…</li>
 </ul>
+
+<h3>Ampliación: filtros y longitud de onda (secciones 8 y 9 de la teoría)</h3>
+<p><b>Por qué está:</b> en la carpeta, en la clase de armónicos, aparecen los cuatro tipos de filtro sobre el espectro y el cálculo de $\lambda$ para AM (1015 kHz) y FM. <b>Duración sugerida:</b> 30 min.</p>
+<ol>
+<li><b>Filtros (10 min):</b> volvé a la simulación de síntesis de Fourier con la cuadrada y preguntá: “si borro todas las barras menos la primera, ¿qué queda?”. Después mostrá los cuatro dibujos de la teoría. Conectalo con el capacitor de la fuente (pasa bajos) y con los controles de graves/agudos.</li>
+<li><b>Longitud de onda (10 min):</b> preguntá “¿cuánto mide una onda de radio?” antes de dar la fórmula. Hacé AM y FM en el pizarrón.</li>
+<li><b>Simulación (10 min):</b> recorré los ejemplos de la lista; que comparen la red de 50 Hz (6000 km) con el sonido de 440 Hz (78 cm). Cerrá con la antena de λ/4.</li>
+</ol>
+<p><b>Errores frecuentes:</b> no pasar kHz o MHz a Hz; confundir período (tiempo) con longitud de onda (distancia); creer que al cambiar de medio cambia la frecuencia.</p>
+<p><b>Repaso para vos:</b> $c=3\cdot10^8\,\text{m/s}$; atajo: $\lambda[\text{m}]=\frac{300}{f[\text{MHz}]}$. AM: 530–1710 kHz; FM: 88–108 MHz. Antena de cuarto de onda: $\lambda/4$; dipolo: $\lambda/2$. Sonido en aire: 343 m/s a 20 °C.</p>
 `,
   });
 })();

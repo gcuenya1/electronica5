@@ -221,7 +221,65 @@ $$C = \frac{I_L}{f_r\cdot V_r}\qquad\qquad\text{Regla práctica (}V_r=10\,\%\tex
 </div>
 <p>Una regla muy usada en el taller: <b>entre 1000 y 2000 µF por cada ampere</b> de carga en onda completa. Después se elige el valor comercial <b>inmediatamente superior</b>: 470, 1000, 2200, 3300, 4700, 6800, 10 000 µF.</p>
 
-<h2>6. El precio del filtro: picos de corriente en los diodos</h2>
+<!-- AMPLIACION-CARPETA -->
+<h2>6. Cálculo exacto del capacitor: tiempos de carga y descarga</h2>
+<p>La fórmula $C=\frac{I_L}{f_r V_r}$ es una <b>aproximación</b>: supone que el capacitor se descarga en línea recta y durante todo el período. Funciona bien con rizados chicos, pero si el rizado es grande el error crece. En la carpeta se hizo el cálculo <b>exacto</b>, que sale de mirar con cuidado qué pasa en un ciclo de rizado:</p>
+${(() => {
+  const W = 440, H0 = 210, x0 = 40, x1 = 420, yb = 180, A = 140, vr = 0.3, N = 300;
+  const T = 1;                      // período de rizado (onda completa) = medio ciclo de red
+  const w = Math.PI;                // ω tal que |sen(ω t)| tiene período 1
+  const X = (t) => x0 + (x1 - x0) * (t + 0.25) / 1.75, Y = (v) => yb - A * v;
+  const a = Math.asin(1 - vr), tc = (Math.PI / 2 - a) / w, td = T - tc;
+  const tau = td / Math.log(1 / (1 - vr));
+  const rect = (t) => Math.abs(Math.sin(w * t));
+  let d1 = ''; for (let i = 0; i <= N; i++) { const t = -0.25 + 1.75 * i / N; d1 += (i ? 'L' : 'M') + X(t).toFixed(1) + ' ' + Y(rect(t)).toFixed(1); }
+  // tensión del capacitor: desde el pico en t=0.5 (pico de |sen|) descarga exp hasta t=0.5+td, luego sigue la senoide hasta 1.5
+  const vc = (t) => { const tp = 0.5; if (t < tp - tc) return null; if (t <= tp) return rect(t); const dt = t - tp; if (dt <= td) return Math.exp(-dt / tau); return rect(t); };
+  let d2 = ''; let pen = false; for (let i = 0; i <= N; i++) { const t = -0.25 + 1.75 * i / N; const v = vc(t); if (v === null) { pen = false; continue; } d2 += (pen ? 'L' : 'M') + X(t).toFixed(1) + ' ' + Y(v).toFixed(1); pen = true; }
+  const tp = 0.5, tv = tp + td;
+  const cota = (ta, tb, y, txt, col) => `<path d="M${X(ta)} ${y}H${X(tb)}" style="stroke:${col}" stroke-width="1.5"/><path d="M${X(ta)} ${y - 5}v10M${X(tb)} ${y - 5}v10" style="stroke:${col}" stroke-width="1.5"/><text x="${(X(ta) + X(tb)) / 2}" y="${y - 6}" font-size="12" font-weight="700" text-anchor="middle" style="fill:${col}">${txt}</text>`;
+  return `<figure class="figura"><svg class="esq" viewBox="0 0 ${W} ${H0}" width="${W}" height="${H0}">
+    <path d="M${x0} ${yb}H${x1 + 8}M${x0} ${yb + 5}V12" stroke="currentColor" stroke-width="1.3" fill="none"/>
+    <path d="${d1}" fill="none" stroke-width="1.5" stroke-dasharray="5 4" style="stroke:var(--muted)"/>
+    <path d="${d2}" fill="none" stroke-width="3" style="stroke:var(--c1)"/>
+    <path d="M${x0} ${Y(1)}H${x1}M${x0} ${Y(1 - vr)}H${x1}" stroke-width="1" stroke-dasharray="3 3" style="stroke:var(--c2)"/>
+    <text x="${x0 - 4}" y="${Y(1) + 4}" font-size="12" text-anchor="end">Vp</text><text x="${x0 - 4}" y="${Y(1 - vr) + 4}" font-size="12" text-anchor="end">Vmín</text>
+    ${cota(tp - tc, tp, Y(1) - 12, 'tc', 'var(--c3)')}${cota(tp, tv, Y(1 - vr) + 22, 'td', 'var(--c4)')}${cota(tv, tv + tc, Y(1) - 12, 'tc', 'var(--c3)')}
+    <text x="${x1}" y="${yb - 6}" font-size="11" text-anchor="end">t</text>
+  </svg><figcaption>Gris: salida del puente sin capacitor. Azul: tensión en el capacitor. Durante <b>tc</b> los diodos conducen y el capacitor se carga siguiendo la senoide; durante <b>td</b> los diodos están cortados y el capacitor se descarga sobre la carga.</figcaption></figure>`;
+})()}
+<p>Llamamos $v_r=\frac{V_r}{V_p}$ al <b>rizado normalizado</b> (por ejemplo, 10 % → $v_r=0{,}1$), de modo que $V_{\text{mín}}=V_p(1-v_r)$, y $\omega=2\pi f$ con $f=50\,\text{Hz}$ (la de la red).</p>
+<div class="caja formula"><span class="caja-titulo">Paso 1 — Tiempo de carga tc (los diodos conducen)</span>
+<p>El capacitor arranca en $V_{\text{mín}}$ y sube siguiendo la senoide hasta el pico (que ocurre en $\omega t=\pi/2$). La senoide vale $V_{\text{mín}}$ cuando $V_p\,\text{sen}(\omega t_1)=V_{\text{mín}}$, o sea $\omega t_1=\text{sen}^{-1}(1-v_r)$:</p>
+$$t_c=\frac{\dfrac{\pi}{2}-\text{sen}^{-1}(1-v_r)}{\omega}$$
+</div>
+<div class="caja formula"><span class="caja-titulo">Paso 2 — Tiempo de descarga td (el capacitor alimenta solo a la carga)</span>
+<p>Carga y descarga se reparten el período de rizado: $t_c+t_d=T_r$. Onda completa: $T_r=\frac{T}{2}$; media onda: $T_r=T$. Despejando:</p>
+$$\text{Onda completa: }t_d=\frac{\dfrac{\pi}{2}+\text{sen}^{-1}(1-v_r)}{\omega}\qquad\qquad\text{Media onda: }t_d=\frac{\dfrac{3\pi}{2}+\text{sen}^{-1}(1-v_r)}{\omega}$$
+</div>
+<div class="caja formula"><span class="caja-titulo">Paso 3 — La descarga es exponencial (tema 12, sección 2)</span>
+$$V_{\text{mín}}=V_p\,e^{-t_d/RC}\quad\Rightarrow\quad 1-v_r=e^{-t_d/RC}\quad\Rightarrow\quad C=\frac{t_d}{R\cdot\ln\!\left(\dfrac{1}{1-v_r}\right)}=\frac{-\,t_d}{R\cdot\ln(1-v_r)}$$
+</div>
+<div class="caja formula"><span class="caja-titulo">Juntando todo (como en la carpeta)</span>
+$$\text{Onda completa: }\ C=\frac{\dfrac{\pi}{2}+\text{sen}^{-1}(1-v_r)}{-\,2\pi f\,R\,\ln(1-v_r)}\qquad\qquad \text{Media onda: }\ C=\frac{\dfrac{3\pi}{2}+\text{sen}^{-1}(1-v_r)}{-\,2\pi f\,R\,\ln(1-v_r)}$$
+<p>Y la aproximada, para comparar: $C_{ap}=\dfrac{1}{f_r\,R\,v_r}$ (con $f_r=2f$ en onda completa y $f_r=f$ en media onda). El error de la aproximación:</p>
+$$\text{Error}\,\%=\frac{C_{ap}-C}{C}\cdot100$$
+</div>
+<div class="caja ejemplo"><span class="caja-titulo">Ejemplo: puente, 50 Hz, R<sub>L</sub> = 100 Ω, rizado del 10 %</span>
+$\omega=314{,}16\,\text{rad/s}$; $\text{sen}^{-1}(0{,}9)=1{,}1198\,\text{rad}$.
+$$t_c=\frac{1{,}5708-1{,}1198}{314{,}16}=1{,}44\,\text{ms}\qquad t_d=\frac{1{,}5708+1{,}1198}{314{,}16}=8{,}56\,\text{ms}\qquad(t_c+t_d=10\,\text{ms}\ ✓)$$
+$$C=\frac{0{,}00856}{100\cdot\ln(1/0{,}9)}=\frac{0{,}00856}{100\cdot0{,}10536}=813\,\mu\text{F}\qquad C_{ap}=\frac{1}{100\cdot100\cdot0{,}1}=1000\,\mu\text{F}$$
+La aproximada da un 23 % más. Con rizado del 5 % la diferencia baja al 14 %; con 30 %, sube al 59 %.
+</div>
+<div class="caja tip"><span class="caja-titulo">Entonces, ¿cuál uso?</span>
+<ul>
+<li>La aproximación <b>siempre da un capacitor más grande</b> que el necesario (supone que se descarga todo el período y en línea recta): es un error “del lado seguro”. Para diseñar con rizados chicos (≤ 10 %) alcanza y sobra.</li>
+<li>El cálculo exacto sirve cuando el rizado es grande, cuando querés saber cuánto tiempo conducen los diodos ($t_c$, que define los picos de corriente) o cuando te lo piden en el examen.</li>
+<li>Los capacitores electrolíticos tienen tolerancias de ±20 %: por eso igual se elige el comercial <b>superior</b>.</li>
+</ul>
+</div>
+
+<h2>7. El precio del filtro: picos de corriente en los diodos</h2>
 <p>Los diodos solo conducen durante un ratito cerca de cada pico (el <b>ángulo de conducción</b>, típicamente 20–40° de cada semiciclo). En ese ratito tienen que reponer <b>toda</b> la carga que el capacitor entregó durante el resto del ciclo. Resultado: la corriente por los diodos viene en <b>pulsos angostos y altos</b>, de 5 a 10 veces la corriente media de la carga.</p>
 <div class="caja formula"><span class="caja-titulo">Estimación del pico de corriente</span>
 $$\cos\theta = 1-\frac{V_r}{V_p}\qquad t_c=\frac{\theta}{2\pi f_{red}}\qquad I_{D,pico}\approx 2\,I_L\,\frac{T_r}{t_c}$$
@@ -233,7 +291,7 @@ $$\cos\theta = 1-\frac{V_r}{V_p}\qquad t_c=\frac{\theta}{2\pi f_{red}}\qquad I_{
 <li><b>Al encender</b>, el capacitor está descargado y se comporta como un cortocircuito: hay un pico de corriente (<em>inrush</em>) limitado solo por la resistencia del bobinado. Los diodos lo soportan por diseño ($I_{FSM}$ = 30 A en un 1N4007), pero en fuentes grandes se agrega un termistor NTC en serie.</li>
 </ul>
 
-<h2>7. El capacitor electrolítico: polaridad y tensión de trabajo</h2>
+<h2>8. El capacitor electrolítico: polaridad y tensión de trabajo</h2>
 <p>Para tener miles de µF en un tamaño razonable se usan capacitores <b>electrolíticos</b> de aluminio. Tienen dos datos impresos que hay que respetar sí o sí:</p>
 <ul>
 <li><b>Polaridad:</b> tienen + y −. La pata más larga es el +, y del lado del − hay una franja con signos “−”. <b>Conectado al revés, se calienta, se infla y puede explotar</b> (literalmente: por eso tienen una cruz marcada arriba, que es una válvula de seguridad).</li>
@@ -244,13 +302,13 @@ Un capacitor de filtro puede mantener la tensión varios minutos después de des
 </div>
 <p>Otros datos: temperatura máxima (85 °C o 105 °C: preferí 105 °C), y la <b>ESR</b> (resistencia serie equivalente), que en electrolíticos viejos o “secos” aumenta y hace que la fuente tenga más rizado. Un electrolítico inflado es la falla más común en fuentes y monitores.</p>
 
-<h2>8. Capacitores de desacople (100 nF)</h2>
+<h2>9. Capacitores de desacople (100 nF)</h2>
 <p>Al lado del electrolítico grande casi siempre vas a ver un capacitor cerámico chiquito de <b>100 nF</b> (marcado “104”). ¿Para qué, si es 30 000 veces más chico? Porque el electrolítico es bueno para frecuencias bajas (100 Hz), pero a frecuencias altas (ruido de conmutación de los integrados, MHz) se comporta mal por su inductancia interna. El cerámico de 100 nF filtra ese ruido rápido.</p>
 <div class="caja tip"><span class="caja-titulo">Regla de oro</span>
 Un capacitor de 100 nF entre alimentación y masa <b>lo más cerca posible de cada integrado</b> (microcontrolador, operacional, regulador). Fijate en cualquier placa de Arduino: hay varios.
 </div>
 
-<h2>9. Ejemplo completo: diseño de una fuente para 12 V – 0,5 A</h2>
+<h2>10. Ejemplo completo: diseño de una fuente para 12 V – 0,5 A</h2>
 <p>Queremos alimentar un circuito de 12 V que consume hasta 0,5 A. La salida del filtro va a alimentar un regulador de 12 V (tema 13), que necesita en su entrada <b>por lo menos unos 14,5 V en todo momento</b> (incluido el valle del rizado).</p>
 ${Esq.svg(660, 205, fuente(true), 'Fuente completa hasta el filtro: transformador, puente, electrolítico, resistencia de descarga y desacople.')}
 <div class="caja ejemplo"><span class="caja-titulo">Diseño paso a paso</span>
@@ -266,7 +324,7 @@ ${Esq.svg(660, 205, fuente(true), 'Fuente completa hasta el filtro: transformado
 </ol>
 </div>
 
-<h2>10. Limitaciones: ¿por qué todavía falta algo?</h2>
+<h2>11. Limitaciones: ¿por qué todavía falta algo?</h2>
 <ul>
 <li><b>El rizado depende de la carga:</b> con el filtro anterior, a 50 mA el rizado sería de 0,15 V; a 0,5 A, 1,5 V. Cuanto más consume el circuito, más baja y más ondula la tensión.</li>
 <li><b>La tensión de salida depende de la red:</b> si la red sube un 10 %, $V_{CC}$ sube un 10 %.</li>
@@ -448,6 +506,94 @@ ${Esq.svg(660, 205, fuente(true), 'Fuente completa hasta el filtro: transformado
           });
         },
       },
+      {
+        titulo: 'Capacitor de filtro: cálculo exacto vs aproximado',
+        descripcion: 'Elegí el rizado que querés (o el capacitor que tenés) y compará el método exacto (tc, td y la exponencial) con la fórmula aproximada. El gráfico marca los tiempos de carga y de descarga.',
+        montar(cont, H) {
+          const { controles, vista } = H.layout(cont);
+          const nL = (x, d) => H.num(x, d).replace(',', '{,}');
+          const modo = H.select(controles, { label: '¿Qué querés calcular?', value: 'C', onChange: upd, opciones: [{ v: 'C', t: 'El capacitor, dado el rizado' }, { v: 'vr', t: 'El rizado, dado el capacitor' }] });
+          const tipo = H.select(controles, { label: 'Rectificador', value: 'oc', onChange: upd, opciones: [{ v: 'oc', t: 'Onda completa (puente o punto medio)' }, { v: 'mo', t: 'Media onda' }] });
+          const fr = H.select(controles, { label: 'Frecuencia de red', value: '50', onChange: upd, opciones: [{ v: '50', t: '50 Hz' }, { v: '60', t: '60 Hz' }] });
+          const vp = H.slider(controles, { label: 'Vp a la salida del rectificador', min: 5, max: 50, step: 0.1, value: 15.6, unidad: 'V', onInput: upd });
+          const rl = H.slider(controles, { label: 'Carga RL', min: 10, max: 2000, log: true, value: 100, unidad: 'Ω', onInput: upd });
+          const rz = H.slider(controles, { label: 'Rizado deseado (Vr / Vp)', min: 0.01, max: 0.5, step: 0.01, value: 0.1, fmt: v => H.num(v * 100, 0) + ' %', onInput: upd });
+          const cc = H.slider(controles, { label: 'Capacitor disponible', min: 10, max: 10000, log: true, value: 1000, fmt: v => H.num(v, 0) + ' µF', onInput: upd });
+          const verAp = H.check(controles, { label: 'Mostrar la descarga “aproximada” (recta)', value: true, onChange: upd });
+          const cv = H.canvas(vista, { alto: 260, dibujar });
+          const lec = H.lecturas(vista);
+          const pasos = H.nota(vista, '');
+          const E6 = [1, 1.5, 2.2, 3.3, 4.7, 6.8];
+          const comercial = (uF) => { const d = Math.pow(10, Math.floor(Math.log10(uF))); for (const m of E6) if (m * d >= uF * (1 - 1e-9)) return m * d; return 10 * d; };
+          let S = {};
+          function exacto(vr, f, R, oc) {
+            const w = 2 * Math.PI * f, a = Math.asin(1 - vr);
+            const tc = (Math.PI / 2 - a) / w;
+            const td = ((oc ? Math.PI / 2 : 1.5 * Math.PI) + a) / w;
+            return { tc, td, C: td / (R * Math.log(1 / (1 - vr))) };
+          }
+          function dibujar(ctx, w, h) {
+            const { f, Tr, Vp, vr, tc, td, C, R, oc } = S;
+            const T = 1 / f, tmax = 2 * Tr + 0.25 * T;
+            const P = H.ejes(ctx, w, h, { xmin: 0, xmax: tmax * 1000, ymin: 0, ymax: Vp * 1.15, xlabel: 't [ms]', ylabel: 'v [V]' });
+            const rect = (t) => oc ? Vp * Math.abs(Math.sin(2 * Math.PI * f * t)) : Vp * Math.max(0, Math.sin(2 * Math.PI * f * t));
+            P.fn(x => rect(x / 1000), { color: H.col('muted'), ancho: 1.3, guiones: [5, 4] });
+            const tp0 = T / 4;   // primer pico
+            const vc = (t) => {
+              if (t < tp0) return rect(t);
+              const k = Math.floor((t - tp0) / Tr), tp = tp0 + k * Tr, dt = t - tp;
+              return dt <= td ? Vp * Math.exp(-dt / (R * C)) : rect(t);
+            };
+            P.fn(x => vc(x / 1000), { color: H.col('c1'), ancho: 3, n: 1200 });
+            if (verAp.value) P.fn(x => { const t = x / 1000; if (t < tp0 || t > tp0 + Tr) return NaN; return Vp - Vp / (R * C) * (t - tp0); }, { color: H.col('c2'), ancho: 1.8, guiones: [6, 3] });
+            P.hline(Vp * (1 - vr), { color: H.col('c2'), label: 'Vmín = ' + H.num(Vp * (1 - vr), 2) + ' V', labelX: tmax * 1000 });
+            const t1 = (tp0 + td) * 1000, t2 = (tp0 + Tr) * 1000;
+            P.vline(tp0 * 1000, { color: H.col('c4') }); P.vline(t1, { color: H.col('c4') });
+            P.texto((tp0 * 1000 + t1) / 2, Vp * 0.45, 'td = ' + H.num(td * 1000, 2) + ' ms', { color: H.col('c4'), align: 'center' });
+            P.texto((t1 + t2) / 2, Vp * 0.3, 'tc = ' + H.num(tc * 1000, 2) + ' ms', { color: H.col('c3'), align: 'center' });
+          }
+          function upd() {
+            const f = +fr.value, R = rl.value, Vp = vp.value, oc = tipo.value === 'oc';
+            const fr_ = oc ? 2 * f : f, Tr = 1 / fr_;
+            rz.el.style.display = modo.value === 'C' ? '' : 'none';
+            cc.el.style.display = modo.value === 'vr' ? '' : 'none';
+            let vr, ex;
+            if (modo.value === 'C') { vr = rz.value; ex = exacto(vr, f, R, oc); }
+            else {
+              const C = cc.value * 1e-6;
+              vr = H.biseccion(x => exacto(x, f, R, oc).C - C, 1e-5, 0.999, 80);
+              ex = exacto(vr, f, R, oc);
+            }
+            const Cap = 1 / (fr_ * R * vr), err = (Cap - ex.C) / ex.C * 100;
+            const vrAp = modo.value === 'vr' ? 1 / (fr_ * R * cc.value * 1e-6) : NaN;
+            S = { f, Tr, Vp, vr, tc: ex.tc, td: ex.td, C: modo.value === 'C' ? ex.C : cc.value * 1e-6, R, oc };
+            const items = [
+              { k: 'Tiempo de carga tc', v: H.num(ex.tc * 1000, 3) + ' ms' },
+              { k: 'Tiempo de descarga td', v: H.num(ex.td * 1000, 3) + ' ms' },
+              { k: 'Rizado Vr', v: H.num(vr * Vp, 2) + ' V (' + H.num(vr * 100, 1) + ' %)' },
+              { k: 'Vcc ≈ Vp − Vr/2', v: H.num(Vp * (1 - vr / 2), 2) + ' V' },
+            ];
+            if (modo.value === 'C') items.push(
+              { k: 'C exacta', v: H.num(ex.C * 1e6, 1) + ' µF', estado: 'ok' },
+              { k: 'C aproximada', v: H.num(Cap * 1e6, 1) + ' µF' },
+              { k: 'Diferencia de la aproximada', v: '+' + H.num(err, 1) + ' %', estado: err > 20 ? 'alerta' : '' },
+              { k: 'Comercial (sobre la exacta)', v: H.num(comercial(ex.C * 1e6), 0) + ' µF' });
+            else items.push(
+              { k: 'Rizado aproximado (fórmula)', v: H.num(vrAp * 100, 1) + ' %' + (vrAp > 1 ? ' (¡sin sentido!)' : '') },
+              { k: 'Corriente media en la carga', v: H.fmt(Vp * (1 - vr / 2) / R, 'A') });
+            lec.set(items);
+            const asin = Math.asin(1 - vr), w = 2 * Math.PI * f;
+            pasos.innerHTML = String.raw`$\omega=2\pi\cdot${f}=${nL(w, 2)}\,\text{rad/s}$; $\text{sen}^{-1}(1-${nL(vr, 3)})=${nL(asin, 4)}\,\text{rad}$.<br>
+              $t_c=\frac{${nL(Math.PI / 2, 4)}-${nL(asin, 4)}}{${nL(w, 2)}}=${nL(ex.tc * 1000, 3)}\,\text{ms}$; $t_d=\frac{${oc ? '1{,}5708' : '4{,}7124'}+${nL(asin, 4)}}{${nL(w, 2)}}=${nL(ex.td * 1000, 3)}\,\text{ms}$ (suman $${nL(Tr * 1000, 1)}\,\text{ms}$ ✓).<br>` +
+              (modo.value === 'C'
+                ? String.raw`$C=\frac{t_d}{R\,\ln\frac{1}{1-v_r}}=\frac{${nL(ex.td, 5)}}{${nL(R, 0)}\cdot${nL(Math.log(1 / (1 - vr)), 5)}}=${nL(ex.C * 1e6, 1)}\,\mu\text{F}$ contra $C_{ap}=\frac{1}{${fr_}\cdot${nL(R, 0)}\cdot${nL(vr, 3)}}=${nL(Cap * 1e6, 1)}\,\mu\text{F}$.`
+                : String.raw`Buscando el $v_r$ que cumple $C=\frac{t_d}{R\ln\frac{1}{1-v_r}}$ con $C=${nL(cc.value, 0)}\,\mu\text{F}$ (se prueba hasta que coincide) sale $v_r=${nL(vr * 100, 2)}\,\%$. La fórmula aproximada $v_r=\frac{1}{f_r R C}$ da ${nL(vrAp * 100, 1)}\,\%$.`);
+            if (window.renderMathInElement) renderMathInElement(pasos, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
+            cv.redibujar();
+          }
+          upd();
+        },
+      },
     ],
 
     ejercicios: [
@@ -493,6 +639,30 @@ ${Esq.svg(660, 205, fuente(true), 'Fuente completa hasta el filtro: transformado
         pista: String.raw`$V_r=I_L/(f_rC)$ y $V_{CC}\approx V_p-V_r/2$, con $V_p=15{,}57\,\text{V}$.`,
         solucion: String.raw`50 mA: $V_r=\frac{0{,}05}{100\cdot0{,}0022}=0{,}23\,\text{V}$, $V_{CC}=15{,}46\,\text{V}$. 500 mA: $V_r=2{,}27\,\text{V}$, $V_{CC}=14{,}43\,\text{V}$. La tensión de salida <b>depende de la carga</b> (y además ondula más). Un circuito que necesita una tensión fija no puede alimentarse solo con el filtro: hace falta un <b>regulador</b> (tema 13).`,
       },
+      {
+        nivel: 'Intermedio',
+        enunciado: String.raw`Un puente alimenta una carga de $100\,\Omega$ (red de 50 Hz). Se quiere un rizado del 10 %. Calculá $t_c$, $t_d$ y el capacitor con el método exacto, y comparalo con la fórmula aproximada.`,
+        pista: String.raw`$\omega=314{,}16\,\text{rad/s}$; $\text{sen}^{-1}(0{,}9)=1{,}1198\,\text{rad}$; $C=\frac{t_d}{R\ln(1/0{,}9)}$.`,
+        solucion: String.raw`$t_c=\frac{1{,}5708-1{,}1198}{314{,}16}=1{,}44\,\text{ms}$; $t_d=\frac{1{,}5708+1{,}1198}{314{,}16}=8{,}56\,\text{ms}$. $C=\frac{0{,}00856}{100\cdot0{,}1054}=813\,\mu\text{F}$. Aproximada: $\frac{1}{100\cdot100\cdot0{,}1}=1000\,\mu\text{F}$ (23 % más). Comercial: 1000 µF.`,
+      },
+      {
+        nivel: 'Intermedio',
+        enunciado: String.raw`Repetí el ejercicio anterior para un rectificador de <b>media onda</b> (misma carga y mismo rizado). ¿Por qué el capacitor es más del doble?`,
+        pista: String.raw`En media onda $t_d=\frac{3\pi/2+\text{sen}^{-1}(1-v_r)}{\omega}$: el capacitor tiene que aguantar casi un ciclo entero.`,
+        solucion: String.raw`$t_c=1{,}44\,\text{ms}$ (igual); $t_d=\frac{4{,}7124+1{,}1198}{314{,}16}=18{,}56\,\text{ms}$. $C=\frac{0{,}01856}{100\cdot0{,}1054}=1762\,\mu\text{F}$ (aproximada: 2000 µF). Es más del doble porque la descarga dura 18,56 ms en vez de 8,56 ms: el capacitor recibe un solo “recargue” por ciclo.`,
+      },
+      {
+        nivel: 'Avanzado',
+        enunciado: String.raw`Con onda completa, $R_L=100\,\Omega$ y $V_p=15{,}6\,\text{V}$, calculá con ambos métodos el capacitor para rizados del 5 % y del 30 %. ¿Qué conclusión sacás sobre la aproximación?`,
+        pista: String.raw`Usá la simulación en modo “el capacitor, dado el rizado” para verificar.`,
+        solucion: String.raw`5 %: exacta 1753 µF, aproximada 2000 µF (+14 %). 30 %: exacta 209 µF, aproximada 333 µF (+59 %). La aproximación siempre da de más (es conservadora) y el error crece con el rizado: con rizados chicos alcanza, con rizados grandes conviene el cálculo exacto.`,
+      },
+      {
+        nivel: 'Avanzado',
+        enunciado: String.raw`Tenés un capacitor de $1000\,\mu\text{F}$ en un puente con $R_L=100\,\Omega$ a 50 Hz. ¿Qué rizado da la fórmula aproximada? ¿Y el método exacto? (Para el exacto, probá valores de $v_r$ hasta que $C$ dé 1000 µF, o usá la simulación en modo “el rizado, dado el capacitor”.)`,
+        pista: String.raw`Aproximada: $v_r=\frac{1}{f_rRC}$. Exacta: calculá $C(v_r)$ para 8 %, 8,5 %… y acercate.`,
+        solucion: String.raw`Aproximada: $v_r=\frac{1}{100\cdot100\cdot0{,}001}=10\,\%$. Exacta: con $v_r=8{,}3\,\%$ → $t_d=\frac{1{,}5708+\text{sen}^{-1}(0{,}917)}{314{,}16}=8{,}64\,\text{ms}$ y $C=\frac{0{,}00864}{100\cdot\ln(1/0{,}917)}\approx1000\,\mu\text{F}$. El rizado real es ≈ 8,3 %: un poco mejor que lo que predice la fórmula.`,
+      },
     ],
 
     quiz: [
@@ -502,6 +672,10 @@ ${Esq.svg(660, 205, fuente(true), 'Fuente completa hasta el filtro: transformado
       { pregunta: 'Un circuito RC tiene R = 1 kΩ y C = 1000 µF. ¿Cuánto tarda en cargarse prácticamente del todo?', opciones: ['1 s', '5 s', '1 ms', '0,2 s'], correcta: 1, explicacion: 'τ = RC = 1000 · 0,001 = 1 s; “cargado” se considera a los 5τ = 5 s.' },
       { pregunta: 'Para un capacitor de filtro en una fuente cuyo pico sin carga es de 17 V, la tensión de trabajo adecuada es…', opciones: ['16 V', '17 V', '25 V o más', 'No importa'], correcta: 2, explicacion: 'Se pide un margen de al menos 1,5×: 17 · 1,5 ≈ 25 V. El de 16 V se dañaría.' },
       { pregunta: '¿Para qué sirve el capacitor cerámico de 100 nF al lado de un integrado?', opciones: ['Para aumentar la tensión', 'Para filtrar el ruido de alta frecuencia cerca del integrado (desacople)', 'Para reemplazar al electrolítico', 'Para limitar la corriente'], correcta: 1, explicacion: 'El electrolítico grande filtra bien a 100 Hz; el cerámico chico, cerca del integrado, filtra el ruido rápido (MHz).' },
+      { pregunta: 'En un filtro con capacitor, durante el tiempo de carga tc…', opciones: ['Los diodos están cortados', 'Los diodos conducen y el capacitor sigue a la senoide', 'La carga queda sin alimentación', 'El capacitor se descarga'], correcta: 1, explicacion: 'Solo cuando la senoide supera la tensión del capacitor los diodos conducen y lo recargan hasta el pico.' },
+      { pregunta: 'En onda completa a 50 Hz, ¿cuánto suman tc + td?', opciones: ['20 ms', '10 ms', '5 ms', 'Depende de C'], correcta: 1, explicacion: 'Carga y descarga se reparten el período de rizado, que en onda completa es T/2 = 10 ms.' },
+      { pregunta: 'Comparada con el cálculo exacto, la fórmula aproximada C = 1/(fr·R·vr)…', opciones: ['Da siempre un capacitor más chico', 'Da siempre un capacitor más grande (lado seguro)', 'Da exactamente lo mismo', 'No sirve nunca'], correcta: 1, explicacion: 'Supone descarga lineal durante todo el período, cuando en realidad la descarga dura td < Tr y es exponencial. Sobreestima C.' },
+      { pregunta: String.raw`En el cálculo exacto, $C=\frac{t_d}{R\,\ln(1/(1-v_r))}$ sale de…`, opciones: ['La carga del capacitor por la senoide', 'La descarga exponencial V = Vp·e^(−t/RC) durante td', 'La ley de Ohm', 'El factor de forma'], correcta: 1, explicacion: 'Al final de la descarga la tensión vale Vmín = Vp(1 − vr) = Vp·e^(−td/RC). Despejando C sale la fórmula.' },
     ],
 
     docente: String.raw`
@@ -551,6 +725,17 @@ ${Esq.svg(660, 205, fuente(true), 'Fuente completa hasta el filtro: transformado
 <p><b>RC casero:</b> batería de 9 V, resistencia de 10 kΩ, electrolítico de 470 µF o 1000 µF (respetá la polaridad), multímetro y cronómetro del celular. Medí Vc cada 5 s durante la carga y graficá en papel o planilla: comparalo con la curva teórica (τ = 4,7 s o 10 s). Después descargalo por la misma resistencia.</p>
 <p><b>En Tinkercad o Falstad:</b> puente + capacitor + resistencia de carga + osciloscopio. Cambiá el capacitor (100 µF, 1000 µF, 4700 µF) y medí el rizado con el osciloscopio en acople CA. En Falstad, agregá un amperímetro en serie con un diodo para ver los pulsos de corriente.</p>
 <p><b>Real (con supervisión):</b> la fuente del tema 11 (transformador de 12 V + puente) con una lámpara de 12 V. Medí en V⎓ sin y con capacitor de 2200 µF × 25 V: de ≈ 10 V pasa a ≈ 15 V. Si hay osciloscopio, el diente de sierra es muy claro.</p>
+
+<h3>Ampliación: cálculo exacto del capacitor (sección 6)</h3>
+<p><b>Por qué está:</b> en la carpeta (11/8) se dedujeron $t_c$, $t_d$, $V_{\text{mín}}=V_p e^{-t_d/RC}$, las fórmulas de C exacta para onda completa y media onda, la aproximada y el error %. <b>Duración sugerida:</b> 40–50 min.</p>
+<ol>
+<li><b>Repaso (5 min):</b> fórmula aproximada y su idea (descarga lineal todo el período).</li>
+<li><b>Dibujo (10 min):</b> hacé el gráfico de la teoría en el pizarrón, grande, y marcá $t_c$ y $t_d$. Preguntá: “¿en qué momento empiezan a conducir los diodos?” (cuando la senoide alcanza a la tensión del capacitor).</li>
+<li><b>Deducción (15 min):</b> los tres pasos. Recordá la función inversa del seno (calculadora en radianes: SHIFT sin) y la descarga del capacitor (sección 2).</li>
+<li><b>Ejemplo y simulación (15 min):</b> hacé el ejemplo de 10 % y verificalo. Mové el rizado al 30 % y mostrá que la aproximada se va al 59 %. Usá el modo “el rizado, dado el capacitor” para el ejercicio de 1000 µF.</li>
+</ol>
+<p><b>Errores frecuentes:</b> calculadora en grados al hacer $\text{sen}^{-1}$; usar $f_r$ en $\omega$ (va la de la red, 50 Hz); olvidar el signo de $\ln(1-v_r)$, que es negativo; usar $v_r$ en % en vez de en tanto por uno.</p>
+<p><b>Repaso para vos:</b> $\omega=2\pi f=314{,}16\,\text{rad/s}$ (50 Hz). $t_c+t_d=T_r$ (10 ms onda completa, 20 ms media onda). Valores de referencia (onda completa, R = 100 Ω): $v_r$ = 5 % → 1753 µF; 10 % → 813 µF; 20 % → 356 µF; 30 % → 209 µF. Error de la aproximada: 14 %, 23 %, 40 %, 59 %.</p>
 `,
   });
 })();

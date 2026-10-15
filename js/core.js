@@ -449,6 +449,10 @@ const Esq = (() => {
     fuenteAC(x1, y1, x2, y2, t, v, lado) {
       return dos(x1, y1, x2, y2, 34, c => `<circle cx="${c}" cy="0" r="17" ${S}/><path ${S} d="M${c} -10c-7 0 -7 10 0 10s7 10 0 10" transform="rotate(90 ${c} 0) translate(0 -5)"/>`, t, v, lado);
     },
+    /** Fuente de corriente: la flecha apunta de (x1,y1) hacia (x2,y2) (sentido en que empuja la corriente) */
+    fuenteI(x1, y1, x2, y2, t, v, lado) {
+      return dos(x1, y1, x2, y2, 34, c => `<circle cx="${c}" cy="0" r="17" ${S}/><path ${S} d="M${c - 9} 0H${c + 6}"/><path d="M${c + 10} 0l-8 -5v10z" fill="currentColor"/>`, t, v, lado);
+    },
     /** Diodo: ánodo en (x1,y1), cátodo en (x2,y2) */
     D(x1, y1, x2, y2, t, v, lado) {
       return dos(x1, y1, x2, y2, 22, c => `<path d="M${c - 9} -10L${c + 7} 0L${c - 9} 10Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path ${S} d="M${c + 8} -11V11"/>`, t, v, lado);

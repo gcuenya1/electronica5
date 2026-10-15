@@ -304,7 +304,85 @@ ${Esq.svg(360, 230, [
 <p>Con una R por LED, cada resistencia “absorbe” la diferencia de $V_F$ y las corrientes quedan casi iguales. Lo vas a ver en la simulación 2.</p>
 </div>
 
-<h2>6. LED RGB</h2>
+<!-- AMPLIACION-CARPETA -->
+<h2>6. Del dato real al modelo: $V_\gamma$ y $R_d$ a partir de una tabla</h2>
+<p>Hasta ahora usamos el LED como “una pila de $V_F$ volts”. Ese modelo es cómodo, pero en la curva real la tensión <b>sube un poco</b> cuando sube la corriente. Un modelo un poco mejor (el de la carpeta) es una pila más una resistencia chiquita en serie:</p>
+<div class="caja formula"><span class="caja-titulo">Modelo lineal del LED (o del diodo)</span>
+$$V_D=V_\gamma+I_D\cdot R_d$$
+<ul>
+<li>$V_\gamma$ (“gamma”): tensión umbral, donde la recta corta el eje de tensión.</li>
+<li>$R_d$: resistencia dinámica, la inversa de la pendiente de la curva en la zona de conducción: $R_d=\frac{\Delta V}{\Delta I}$.</li>
+</ul>
+</div>
+<p>Para sacar los dos valores se mide la curva (fuente, resistencia, voltímetro y amperímetro) y se arma una tabla. Este es un LED rojo medido en clase:</p>
+${(() => {
+  const T = [[0, 0], [1.47, 0.01], [1.53, 0.05], [1.65, 0.5], [1.72, 1], [1.80, 2.5], [1.88, 5], [1.92, 10], [1.96, 15], [2.00, 20], [2.04, 25], [2.08, 30]];
+  const tabla = `<div class="tabla-wrap"><table class="tabla"><tr><th>$V_D$ [V]</th>${T.map(([v]) => `<td>${String(v).replace('.', ',')}</td>`).join('')}</tr><tr><th>$I_D$ [mA]</th>${T.map(([, i]) => `<td>${String(i).replace('.', ',')}</td>`).join('')}</tr></table></div>`;
+  const X = (v) => 40 + (v - 1.3) / (2.2 - 1.3) * 280, Y = (i) => 190 - i / 32 * 170;
+  const pts = T.filter(([v]) => v > 0).map(([v, i]) => `<circle cx="${X(v).toFixed(1)}" cy="${Y(i).toFixed(1)}" r="4" style="fill:var(--c2)"/>`).join('');
+  const recta = `<path d="M${X(1.84)} ${Y(0)}L${X(2.12)} ${Y(35)}" style="stroke:var(--c1)" stroke-width="2" stroke-dasharray="6 4"/>`;
+  const ejes = `<path d="M40 190H330M40 190V12" stroke="currentColor" stroke-width="1.5"/>` + [1.4, 1.6, 1.8, 2.0, 2.2].map(v => `<text x="${X(v)}" y="205" font-size="11" text-anchor="middle">${String(v).replace('.', ',')}</text>`).join('') + [10, 20, 30].map(i => `<text x="34" y="${Y(i) + 4}" font-size="11" text-anchor="end">${i}</text>`).join('');
+  const marcas = `<path d="M${X(1.84)} ${Y(0)}L${X(1.62)} ${Y(14)}" style="stroke:var(--c1)" stroke-width="1"/><text x="${X(1.62)}" y="${Y(14) - 5}" font-size="12" text-anchor="middle" font-weight="700" style="fill:var(--c1)">Vγ = 1,84 V</text><path d="M${X(1.88)} ${Y(5)}H${X(2.08)}V${Y(30)}" style="stroke:var(--c3)" stroke-width="1.5" fill="none"/><text x="${X(2.0)}" y="${Y(5) + 14}" font-size="11" text-anchor="middle" style="fill:var(--c3)">ΔV = 0,2 V</text><text x="${X(2.08) + 6}" y="${Y(17)}" font-size="11" style="fill:var(--c3)">ΔI = 25 mA</text>`;
+  const fig = `<figure class="figura"><svg class="esq" viewBox="0 0 400 215" width="400" height="215">${ejes}${recta}${pts}${marcas}<text x="330" y="182" font-size="11" text-anchor="end">V [V]</text><text x="46" y="20" font-size="11">I [mA]</text></svg><figcaption>Puntos medidos (naranja) y la recta del modelo (azul).</figcaption></figure>`;
+  return `<div>${tabla}${fig}</div>`;
+})()}
+<div class="caja formula"><span class="caja-titulo">Receta: de la tabla al modelo</span>
+<ol>
+<li>Graficá los puntos y mirá dónde la curva se vuelve <b>casi recta</b> (acá, de 5 mA para arriba).</li>
+<li>Tomá <b>dos puntos</b> de esa zona, bien separados: $(1{,}88\,\text{V};\,5\,\text{mA})$ y $(2{,}08\,\text{V};\,30\,\text{mA})$.</li>
+<li>$R_d=\frac{\Delta V}{\Delta I}=\frac{2{,}08-1{,}88}{0{,}030-0{,}005}=\frac{0{,}2\,\text{V}}{0{,}025\,\text{A}}=8\,\Omega$.</li>
+<li>$V_\gamma=V-I\cdot R_d=2{,}08-0{,}030\cdot8=1{,}84\,\text{V}$ (es donde la recta corta el eje).</li>
+</ol>
+</div>
+<div class="caja ejemplo"><span class="caja-titulo">¿Cuánta corriente aguanta? (potencia máxima)</span>
+La hoja de datos dice $P_{D,\text{máx}}=50\,\text{mW}$. Con el modelo, la potencia del LED es:
+$$P_D=V_D\cdot I_D=V_\gamma\,I_D+R_d\,I_D^2$$
+$$0{,}05=1{,}84\,I_D+8\,I_D^2\quad\Rightarrow\quad I_{D,\text{máx}}=\frac{-1{,}84+\sqrt{1{,}84^2+4\cdot8\cdot0{,}05}}{2\cdot8}=24{,}55\,\text{mA}$$
+Por seguridad se trabaja al 90 %: $I_D=0{,}9\cdot24{,}55=22{,}1\,\text{mA}$. Con una fuente de 12 V:
+$$R_{lim}=\frac{V_{CC}-V_\gamma}{I_D}-R_d=\frac{12-1{,}84}{0{,}0221}-8=452\,\Omega\ \Rightarrow\ 470\,\Omega\text{ comercial}$$
+</div>
+
+<h2>7. Matrices de LEDs: muchos LEDs con una sola fuente</h2>
+<p>Carteles, tiras y lámparas LED tienen decenas de LEDs. Se arman en <b>ramas</b>: cada rama es una <b>serie</b> de $n$ LEDs con <b>su propia resistencia</b>, y las ramas van en paralelo (sección 5: nunca LEDs en paralelo sin su resistencia).</p>
+${Esq.svg(460, 200, [
+  Esq.bat(30, 80, 30, 140, 'Vi', '24 V', -1), Esq.cable([[30, 80], [30, 30], [80, 30]]), Esq.cable([[30, 140], [30, 180], [80, 180]]),
+  ...[30, 80, 130].map((y, k) => [
+    Esq.cable([[80, 30], [80, y + 20], [95, y + 20]]),
+    Esq.LED(95, y + 20, 145, y + 20, '', '', 1, ['var(--red)', 'var(--green)', 'var(--c1)'][k]), Esq.cable([[145, y + 20], [155, y + 20]]),
+    Esq.LED(155, y + 20, 205, y + 20, '', '', 1, ['var(--red)', 'var(--green)', 'var(--c1)'][k]),
+    Esq.texto(235, y + 24, '· · ·', { size: 14 }),
+    Esq.LED(260, y + 20, 310, y + 20, '', '', 1, ['var(--red)', 'var(--green)', 'var(--c1)'][k]), Esq.cable([[310, y + 20], [330, y + 20]]),
+    Esq.R(330, y + 20, 390, y + 20, 'R' + (k + 1), '', 1), Esq.cable([[390, y + 20], [420, y + 20], [420, 180], [80, 180]]),
+  ].join('')),
+  Esq.texto(200, 15, 'n LEDs en serie por rama', { size: 12 }),
+], 'Tres ramas (rojo, verde, azul), cada una con n LEDs en serie y su resistencia limitadora.')}
+<div class="caja formula"><span class="caja-titulo">Diseño de una rama, paso a paso</span>
+<ol>
+<li><b>Corriente de trabajo:</b> $I_D=0{,}9\cdot I_{D,\text{máx}}$ (del cálculo de potencia).</li>
+<li><b>Tensión de cada LED a esa corriente:</b> $V_D=V_\gamma+I_D\,R_d$.</li>
+<li><b>¿Cuántos LEDs entran en serie?</b> $n=\frac{V_i}{V_D}$ y se toma la <b>parte entera</b> (redondeo para abajo). Conviene que sobre al menos un 10 % de $V_i$ para la resistencia; si sobra menos, usá un LED menos.</li>
+<li><b>Resistencia limitadora:</b> $R_{lim}=\frac{V_i-n\,V_\gamma}{I_D}-n\,R_d$ → valor comercial <b>superior</b>.</li>
+<li><b>Corriente real:</b> $I=\frac{V_i-n\,V_\gamma}{R_{com}+n\,R_d}$.</li>
+<li><b>Potencias:</b> $P_{LED}=V_\gamma I+R_dI^2$; $P_R=R\,I^2$; $P_{rama}=V_i\cdot I$.</li>
+</ol>
+</div>
+<div class="caja ejemplo"><span class="caja-titulo">Ejemplo: cartel con LEDs rojos y una batería de 24 V</span>
+LED de la sección 6 ($V_\gamma=1{,}84\,\text{V}$, $R_d=8\,\Omega$), $I_D=22\,\text{mA}$: $V_D=1{,}84+0{,}022\cdot8=2{,}02\,\text{V}$.<br>
+$n=\frac{24}{2{,}02}=11{,}9\to11$ LEDs, pero sobrarían solo $24-11\cdot2{,}02=1{,}8\,\text{V}$ (7,5 %) → usamos $n=10$.<br>
+$R_{lim}=\frac{24-10\cdot1{,}84}{0{,}022}-10\cdot8=254{,}5-80=174{,}5\,\Omega\Rightarrow180\,\Omega$. Corriente real: $I=\frac{5{,}6}{180+80}=21{,}5\,\text{mA}$.<br>
+Potencias: cada LED $43\,\text{mW}$ (menos que 50 ✓), la R $83\,\text{mW}$ (alcanza 1/4 W), la rama $24\cdot0{,}0215=0{,}52\,\text{W}$. Con <b>4 ramas</b> (40 LEDs): $I_{total}=86\,\text{mA}$ y $P=2{,}07\,\text{W}$.
+</div>
+<div class="caja idea"><span class="caja-titulo">¿Cuánto dura la batería? (autonomía)</span>
+La energía de una batería es $E=V\cdot C$ (tensión × capacidad en Ah) y se mide en Wh. La autonomía es:
+$$t=\frac{E_{batería}}{P_{consumo}}\qquad\text{Ej.: }24\,\text{V}\cdot7\,\text{Ah}=168\,\text{Wh}\ \Rightarrow\ t=\frac{168\,\text{Wh}}{2{,}07\,\text{W}}=81\,\text{h}$$
+</div>
+<div class="caja tip"><span class="caja-titulo">Bajar el brillo con PWM (dimmer)</span>
+Si cada rama se prende y apaga con un ciclo de trabajo $D$ (por ejemplo, un transistor manejado por un Arduino, tema 14):
+$$I_{media}=D\cdot I\qquad I_{ef}=I\sqrt D\qquad P_{media}=D\cdot P$$
+<p>La corriente media decide el consumo de la batería (y el brillo); la <b>eficaz</b> es la que calienta la resistencia ($P_R=I_{ef}^2R$). Con $D=50\,\%$ el cartel del ejemplo consume 1,03 W y la batería dura el doble: 162 h. En un LED RGB, usando un $D$ distinto para cada color se mezclan los colores (por ejemplo R = 60 %, G = 75 %, B = 30 %).</p>
+</div>
+
+<h2>8. LED RGB</h2>
 <p>Un LED RGB tiene <b>tres LEDs en la misma cápsula</b>: rojo (R), verde (G) y azul (B), y 4 patas. Una pata es <b>común</b> (la más larga) y las otras tres son una por color. Mezclando intensidades sale cualquier color (rojo + verde = amarillo; los tres = blanco “más o menos”).</p>
 <div class="dos-col">
 <div>
@@ -335,7 +413,7 @@ ${Esq.svg(300, 215, [
 <li>Para identificar qué tipo es: con el multímetro en modo diodo, punta roja en la pata larga → si prenden los colores tocando las otras con la negra, es <b>ánodo común</b>.</li>
 </ul>
 
-<h2>7. Manejar LEDs desde un Arduino</h2>
+<h2>9. Manejar LEDs desde un Arduino</h2>
 <p>Un pin digital de Arduino UNO en HIGH da ≈ 5 V y puede entregar (o absorber en LOW) corriente. Límites del ATmega328P:</p>
 <div class="tabla-wrap"><table class="tabla">
 <tr><th>Parámetro</th><th>Valor</th></tr>
@@ -370,7 +448,7 @@ ${Esq.svg(400, 430, [
 </ul>
 </div>
 
-<h2>8. Control de brillo con PWM</h2>
+<h2>10. Control de brillo con PWM</h2>
 <p>¿Cómo se regula el brillo de un LED? Podrías cambiar la resistencia, pero lo práctico es el <b>PWM</b> (tema 4): el pin prende y apaga el LED cientos de veces por segundo y el ojo <b>promedia</b>. El brillo percibido es proporcional al <b>ciclo de trabajo</b> $D$:</p>
 $$I_{media}=D\cdot I_{pico}\qquad\text{(por ejemplo, } D=25\,\%\text{ con } I_{pico}=15\,\text{mA} \Rightarrow I_{media}=3{,}75\,\text{mA)}$$
 <ul>
@@ -380,7 +458,7 @@ $$I_{media}=D\cdot I_{pico}\qquad\text{(por ejemplo, } D=25\,\%\text{ con } I_{p
 <li>Frecuencia mínima para no ver parpadeo: más de ≈ 200 Hz (mejor > 1 kHz si se filma con el celular).</li>
 </ul>
 
-<h2>9. Display de 7 segmentos (breve)</h2>
+<h2>11. Display de 7 segmentos (breve)</h2>
 ${sieteSeg()}
 <ul>
 <li>Son <b>7 LEDs</b> con forma de barrita (a a g) más el punto (dp), con todos los ánodos o todos los cátodos unidos (<b>ánodo común</b> o <b>cátodo común</b>), igual que el RGB.</li>
@@ -611,6 +689,155 @@ ${sieteSeg()}
           upd();
         },
       },
+      {
+        titulo: 'De la tabla al modelo: calculá Vγ y Rd',
+        descripcion: 'Elegí dos puntos de la tabla medida. La simulación traza la recta del modelo V = Vγ + I·Rd y, con la potencia máxima, calcula la corriente de trabajo y la resistencia limitadora.',
+        montar(cont, H) {
+          const nL = (x, d) => H.num(x, d).replace(',', '{,}');
+          const { controles, vista } = H.layout(cont);
+          const TABLAS = {
+            rojo: { t: 'LED rojo (el de la teoría)', col: 'red', pd: 50, d: [[1.47, 0.01], [1.53, 0.05], [1.65, 0.5], [1.72, 1], [1.80, 2.5], [1.88, 5], [1.92, 10], [1.96, 15], [2.00, 20], [2.04, 25], [2.08, 30]] },
+            verde: { t: 'LED verde InGaN', col: 'green', pd: 70, d: [[2.30, 0.01], [2.45, 0.1], [2.60, 0.5], [2.70, 1.5], [2.80, 4], [2.89, 7.5], [2.92, 10], [2.98, 15], [3.04, 20], [3.10, 25], [3.16, 30]] },
+            azul: { t: 'LED azul', col: 'c1', pd: 80, d: [[2.45, 0.01], [2.60, 0.1], [2.72, 0.5], [2.82, 1.5], [2.92, 4], [2.98, 6], [3.04, 10], [3.11, 15], [3.18, 20], [3.25, 25], [3.32, 30]] },
+          };
+          let tb = TABLAS.rojo;
+          const opPts = () => tb.d.map(([v, i], k) => ({ v: String(k), t: `${H.num(v, 2)} V ; ${H.num(i, 2)} mA` }));
+          const sel = H.select(controles, { label: 'LED medido', value: 'rojo', opciones: Object.entries(TABLAS).map(([k, o]) => ({ v: k, t: o.t })), onChange: (v) => { tb = TABLAS[v]; rehacer(); pd.value = tb.pd; upd(); } });
+          const cajaA = H.el('div'), cajaB = H.el('div'); controles.append(cajaA, cajaB);
+          let pA, pB;
+          function rehacer() {
+            cajaA.innerHTML = ''; cajaB.innerHTML = '';
+            pA = H.select(cajaA, { label: 'Punto A', value: '5', opciones: opPts(), onChange: upd });
+            pB = H.select(cajaB, { label: 'Punto B', value: '10', opciones: opPts(), onChange: upd });
+          }
+          rehacer();
+          const pd = H.slider(controles, { label: 'Potencia máxima del LED', min: 20, max: 150, step: 5, value: 50, fmt: v => v + ' mW', onInput: upd });
+          const vcc = H.slider(controles, { label: 'Tensión de la fuente', min: 3, max: 24, step: 0.5, value: 12, unidad: 'V', onInput: upd });
+          H.nota(controles, 'Probá elegir un punto del “codo” (corrientes chicas): la recta deja de representar bien a la curva.');
+          const cv = H.canvas(vista, { alto: 260, dibujar });
+          const lec = H.lecturas(vista);
+          const nota = H.nota(vista, '');
+          let M = {};
+          function dibujar(ctx, w, h) {
+            const vs = tb.d.map(p => p[0]);
+            const P = H.ejes(ctx, w, h, { xmin: Math.floor((vs[0] - 0.15) * 10) / 10, xmax: Math.ceil((vs[vs.length - 1] + 0.08) * 10) / 10, ymin: 0, ymax: 34, xlabel: 'V [V]', ylabel: 'I [mA]' });
+            P.pts(tb.d, { color: H.col('muted'), ancho: 1.5 });
+            if (Number.isFinite(M.rd) && M.rd > 0) P.fn(v => (v - M.vg) / M.rd * 1000, { color: H.col('c1'), guiones: [6, 4], desde: M.vg });
+            tb.d.forEach(([v, i], k) => P.punto(v, i, { r: k === +pA.value || k === +pB.value ? 6 : 3.5, color: k === +pA.value || k === +pB.value ? H.col('c2') : H.col(tb.col) }));
+            if (Number.isFinite(M.vg)) P.punto(M.vg, 0, { color: H.col('c1'), r: 5, label: 'Vγ' });
+          }
+          function upd() {
+            const a = tb.d[+pA.value], b = tb.d[+pB.value];
+            const rd = (b[0] - a[0]) / ((b[1] - a[1]) / 1000);
+            const vg = b[0] - b[1] / 1000 * rd;
+            const P = pd.value / 1000;
+            const imax = rd > 0 ? (-vg + Math.sqrt(vg * vg + 4 * rd * P)) / (2 * rd) : NaN;
+            const id = 0.9 * imax;
+            const rl = (vcc.value - vg) / id - rd;
+            M = { rd, vg };
+            const valido = a !== b && rd > 0;
+            lec.set([
+              { k: 'Rd = ΔV / ΔI', v: valido ? H.num(rd, 2) + ' Ω' : '—', estado: valido ? 'ok' : 'mal' },
+              { k: 'Vγ = V − I·Rd', v: valido ? H.num(vg, 3) + ' V' : '—', estado: valido ? 'ok' : 'mal' },
+              { k: 'I máx (por potencia)', v: valido ? H.num(imax * 1000, 2) + ' mA' : '—' },
+              { k: 'I de trabajo (90 %)', v: valido ? H.num(id * 1000, 2) + ' mA' : '—' },
+              { k: 'R limitadora', v: valido && rl > 0 ? H.num(rl, 1) + ' Ω' : '—', estado: valido && rl > 0 ? '' : 'alerta' },
+              { k: 'R comercial (E12)', v: valido && rl > 0 ? H.fmt(e12Sup(rl), 'Ω') : '—' },
+            ]);
+            const codo = Math.min(a[1], b[1]) < 4;
+            nota.innerHTML = !valido ? 'Elegí dos puntos <b>distintos</b>, con el punto B a mayor corriente que el A.'
+              : String.raw`$R_d=\frac{${nL(b[0], 2)}-${nL(a[0], 2)}}{${nL(b[1] / 1000, 4)}-${nL(a[1] / 1000, 4)}}=${nL(rd, 2)}\,\Omega$ y $V_\gamma=${nL(b[0], 2)}-${nL(b[1] / 1000, 3)}\cdot${nL(rd, 2)}=${nL(vg, 3)}\,\text{V}$.` +
+                (codo ? ' <b>Ojo:</b> uno de los puntos está en el codo de la curva; la recta queda muy inclinada y el modelo es malo para corrientes de trabajo. Elegí puntos de 5 mA para arriba.' : '') +
+                (rl <= 0 ? ' <b>La fuente no alcanza</b> para este LED.' : '');
+            if (window.renderMathInElement) renderMathInElement(nota, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
+            cv.redibujar();
+          }
+          upd();
+        },
+      },
+      {
+        titulo: 'Diseñador de matrices de LEDs (con batería y PWM)',
+        descripcion: 'Elegí la fuente, el color y cuántas ramas querés. La simulación calcula cuántos LEDs entran en serie, la resistencia de cada rama, las potencias y cuánto dura la batería. Con el ciclo de trabajo D bajás el brillo.',
+        montar(cont, H) {
+          const nL = (x, d) => H.num(x, d).replace(',', '{,}');
+          const { controles, vista } = H.layout(cont);
+          const LEDS = {
+            rojo: { t: 'Rojo (Vγ 1,84 V; Rd 8 Ω; 50 mW)', vg: 1.84, rd: 8, pd: 0.05, col: '#ff3b30' },
+            verde: { t: 'Verde (Vγ 2,80 V; Rd 12 Ω; 70 mW)', vg: 2.8, rd: 12, pd: 0.07, col: '#00d26a' },
+            azul: { t: 'Azul (Vγ 2,90 V; Rd 14 Ω; 80 mW)', vg: 2.9, rd: 14, pd: 0.08, col: '#2f6bff' },
+            blanco: { t: 'Blanco (Vγ 2,95 V; Rd 12 Ω; 80 mW)', vg: 2.95, rd: 12, pd: 0.08, col: '#cfe0ff' },
+          };
+          const vi = H.slider(controles, { label: 'Tensión de la batería Vi', min: 5, max: 48, step: 1, value: 24, unidad: 'V', onInput: upd });
+          const tipo = H.select(controles, { label: 'LED', value: 'rojo', opciones: Object.entries(LEDS).map(([k, o]) => ({ v: k, t: o.t })), onChange: upd });
+          const marg = H.slider(controles, { label: 'Corriente de trabajo (% de la máxima)', min: 50, max: 100, step: 5, value: 90, fmt: v => v + ' %', onInput: upd });
+          const ramas = H.slider(controles, { label: 'Cantidad de ramas', min: 1, max: 8, step: 1, value: 4, fmt: v => String(v), onInput: upd });
+          const margen = H.check(controles, { label: 'Dejar al menos 10 % de Vi para la R', value: true, onChange: upd });
+          H.sep(controles);
+          const cap = H.slider(controles, { label: 'Capacidad de la batería', min: 1, max: 100, step: 1, value: 7, fmt: v => v + ' Ah', onInput: upd });
+          const duty = H.slider(controles, { label: 'Ciclo de trabajo PWM (D)', min: 0.05, max: 1, step: 0.05, value: 1, fmt: v => H.num(v * 100, 0) + ' %', onInput: upd });
+          const cv = H.canvas(vista, { alto: (w) => 70 + 34 * ramas.value, dibujar });
+          const lec = H.lecturas(vista);
+          const pasos = H.nota(vista, '');
+          let S = {};
+          function dibujar(ctx, w, h) {
+            const L = LEDS[tipo.value];
+            const n = Math.max(0, S.n || 0), nr = ramas.value;
+            const x0 = 30, x1 = w - 90, paso = n > 0 ? Math.min(34, (x1 - x0) / n) : 0, r = Math.max(3, Math.min(10, paso * 0.32));
+            ctx.strokeStyle = H.col('ink'); ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(x0 - 15, 20); ctx.lineTo(x0 - 15, 30 + 34 * (nr - 1) + 20); ctx.moveTo(w - 30, 20); ctx.lineTo(w - 30, 30 + 34 * (nr - 1) + 20); ctx.stroke();
+            ctx.font = '600 11px sans-serif'; ctx.fillStyle = H.col('muted'); ctx.textAlign = 'left';
+            ctx.fillText('+' + vi.value + ' V', x0 - 25, 14); ctx.textAlign = 'right'; ctx.fillText('0 V', w - 22, 14);
+            const nivel = S.ok ? Math.min(1, 0.25 + 0.75 * duty.value) : 0;
+            for (let k = 0; k < nr; k++) {
+              const y = 35 + 34 * k;
+              ctx.strokeStyle = H.col('muted'); ctx.beginPath(); ctx.moveTo(x0 - 15, y); ctx.lineTo(w - 30, y); ctx.stroke();
+              for (let j = 0; j < n; j++) H.brillo(ctx, x0 + paso * (j + 0.5), y, r, nivel, L.col);
+              ctx.fillStyle = H.col('panel'); ctx.fillRect(x1 + 8, y - 7, 44, 14);
+              ctx.strokeStyle = H.col('ink'); ctx.strokeRect(x1 + 8, y - 7, 44, 14);
+              ctx.fillStyle = H.col('ink'); ctx.textAlign = 'center'; ctx.font = '600 10px sans-serif';
+              ctx.fillText(S.rc ? H.fmt(S.rc, 'Ω', 2) : 'R', x1 + 30, y + 3.5);
+            }
+            ctx.fillStyle = H.col('muted'); ctx.textAlign = 'left'; ctx.font = '12px sans-serif';
+            ctx.fillText(`${nr} rama${nr > 1 ? 's' : ''} × ${n} LEDs = ${nr * n} LEDs`, x0, h - 12);
+          }
+          function upd() {
+            const L = LEDS[tipo.value], V = vi.value;
+            const imax = (-L.vg + Math.sqrt(L.vg * L.vg + 4 * L.rd * L.pd)) / (2 * L.rd);
+            const id = imax * marg.value / 100;
+            const vd = L.vg + id * L.rd;
+            let n = Math.floor(V / vd);
+            const nSin = n;
+            if (margen.value) while (n > 0 && V - n * vd < 0.1 * V) n--;
+            const rl = n > 0 ? (V - n * L.vg) / id - n * L.rd : NaN;
+            const rc = rl > 0 ? e12Sup(rl) : NaN;
+            const I = n > 0 && rc > 0 ? (V - n * L.vg) / (rc + n * L.rd) : 0;
+            const D = duty.value, nr = ramas.value;
+            const pLed = L.vg * I + L.rd * I * I, pR = rc * I * I, pRama = V * I;
+            const pTot = pRama * nr * D, iTot = I * nr * D;
+            const aut = pTot > 0 ? V * cap.value / pTot : Infinity;
+            S = { n, rc, ok: n > 0 && rc > 0 };
+            lec.set([
+              { k: 'I máx por potencia', v: H.num(imax * 1000, 2) + ' mA' },
+              { k: 'I de trabajo / V de cada LED', v: H.num(id * 1000, 1) + ' mA / ' + H.num(vd, 2) + ' V' },
+              { k: 'LEDs en serie por rama (n)', v: String(n) + (n !== nSin ? ` (de ${nSin})` : ''), estado: n > 0 ? 'ok' : 'mal' },
+              { k: 'R calculada → comercial', v: S.ok ? H.num(rl, 1) + ' Ω → ' + H.fmt(rc, 'Ω', 2) : '—' },
+              { k: 'Corriente real por rama', v: S.ok ? H.num(I * 1000, 2) + ' mA' : '—' },
+              { k: 'P de cada LED / de la R', v: S.ok ? H.num(pLed * 1000, 1) + ' mW / ' + H.num(pR * 1000, 1) + ' mW' : '—', estado: pR > 0.125 ? 'alerta' : '' },
+              { k: 'Consumo total (medio)', v: S.ok ? H.num(iTot * 1000, 1) + ' mA · ' + H.num(pTot, 2) + ' W' : '—' },
+              { k: 'Autonomía de la batería', v: S.ok ? H.num(aut, 1) + ' h' : '—', estado: 'ok' },
+            ]);
+            pasos.innerHTML = !S.ok ? '<b>No entra ni un LED</b> (o no queda tensión para la resistencia): subí la tensión de la batería.'
+              : String.raw`$n=\left\lfloor\frac{${nL(V, 1)}}{${nL(vd, 3)}}\right\rfloor=${nSin}$${n !== nSin ? ` → usamos ${n} para que sobre al menos el 10 % para la R` : ''}. $R=\frac{${nL(V, 1)}-${n}\cdot${nL(L.vg, 2)}}{${nL(id, 4)}}-${n}\cdot${L.rd}=${nL(rl, 1)}\,\Omega$. Energía de la batería: $${V}\,\text{V}\cdot${cap.value}\,\text{Ah}=${nL(V * cap.value, 0)}\,\text{Wh}$.` +
+                (D < 1 ? String.raw` Con PWM: $I_{media}=D\cdot I=${nL(D * I * 1000, 2)}\,\text{mA}$ e $I_{ef}=I\sqrt D=${nL(I * Math.sqrt(D) * 1000, 2)}\,\text{mA}$ por rama.` : '') +
+                (pR > 0.125 ? ' <b>La resistencia disipa más de 125 mW:</b> usá una de 1/2 W.' : '');
+            if (window.renderMathInElement) renderMathInElement(pasos, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
+            cv.redibujar();
+          }
+          upd();
+          // el alto del canvas depende de la cantidad de ramas
+          ramas.el.querySelector('input').addEventListener('input', () => { cv.cv.style.height = (70 + 34 * ramas.value) + 'px'; });
+        },
+      },
     ],
 
     ejercicios: [
@@ -656,6 +883,36 @@ ${sieteSeg()}
         pista: String.raw`(a) Llamá $V$ a la tensión del nodo de los ánodos y planteá LKC: $\frac{5-V}{75}=\frac{V-1{,}85}{5}+\frac{V-1{,}95}{5}$.`,
         solucion: String.raw`(a) Multiplicando por 75: $5-V=15(V-1{,}85)+15(V-1{,}95)=30V-57$ → $31V=62$ → $V=2{,}00\,\text{V}$.<br>$I_1=\frac{2-1{,}85}{5}=30\,\text{mA}$, $I_2=\frac{2-1{,}95}{5}=10\,\text{mA}$. ¡Con solo 0,1 V de diferencia, uno lleva el triple que el otro! El de 30 mA está al límite y además se calienta (su VF baja y la cosa empeora).<br>(b) Cada rama es independiente: $I_1=\frac{5-1{,}85}{150+5}=20{,}3\,\text{mA}$, $I_2=\frac{5-1{,}95}{155}=19{,}7\,\text{mA}$. Diferencia de solo 3 %.`,
       },
+      {
+        nivel: 'Básico',
+        enunciado: String.raw`De la curva de un LED verde se toman dos puntos de la zona recta: $(2{,}92\,\text{V};\,10\,\text{mA})$ y $(3{,}16\,\text{V};\,30\,\text{mA})$. Calculá $R_d$ y $V_\gamma$.`,
+        pista: String.raw`$R_d=\Delta V/\Delta I$ (con la corriente en A). Después $V_\gamma=V-I\,R_d$ con cualquiera de los dos puntos.`,
+        solucion: String.raw`$R_d=\frac{3{,}16-2{,}92}{0{,}030-0{,}010}=\frac{0{,}24}{0{,}02}=12\,\Omega$. $V_\gamma=3{,}16-0{,}03\cdot12=2{,}80\,\text{V}$ (con el otro punto: $2{,}92-0{,}01\cdot12=2{,}80\,\text{V}$ ✓).`,
+      },
+      {
+        nivel: 'Intermedio',
+        enunciado: String.raw`Un LED rojo tiene $V_\gamma=1{,}84\,\text{V}$, $R_d=8\,\Omega$ y $P_{D,\text{máx}}=50\,\text{mW}$. Calculá la corriente máxima, la de trabajo (90 %) y la resistencia limitadora para 12 V. ¿Qué valor comercial ponés?`,
+        pista: String.raw`$P=V_\gamma I+R_dI^2$ es una cuadrática: $8I^2+1{,}84I-0{,}05=0$.`,
+        solucion: String.raw`$I_{\text{máx}}=\frac{-1{,}84+\sqrt{1{,}84^2+4\cdot8\cdot0{,}05}}{16}=24{,}55\,\text{mA}$. $I_D=22{,}1\,\text{mA}$. $R=\frac{12-1{,}84}{0{,}0221}-8=452\,\Omega\Rightarrow470\,\Omega$. Corriente real: $\frac{10{,}16}{470+8}=21{,}3\,\text{mA}$.`,
+      },
+      {
+        nivel: 'Intermedio',
+        enunciado: String.raw`Con LEDs azules ($V_\gamma=2{,}9\,\text{V}$, $R_d=14\,\Omega$, $I_D=20\,\text{mA}$) y una fuente de 12 V: ¿cuántos LEDs se pueden poner en serie dejando al menos 10 % de la tensión para la resistencia? Calculá la resistencia.`,
+        pista: String.raw`$V_D=V_\gamma+I_DR_d$; $n=\lfloor V_i/V_D\rfloor$ y revisá cuánto sobra.`,
+        solucion: String.raw`$V_D=2{,}9+0{,}02\cdot14=3{,}18\,\text{V}$; $\frac{12}{3{,}18}=3{,}77\to n=3$. Sobran $12-3\cdot3{,}18=2{,}46\,\text{V}$ (20 % ✓). $R=\frac{12-3\cdot2{,}9}{0{,}02}-3\cdot14=165-42=123\,\Omega\Rightarrow150\,\Omega$ (E12 superior; también sirve 130 Ω de la E24). Con 150 Ω: $I=\frac{3{,}3}{150+42}=17{,}2\,\text{mA}$.`,
+      },
+      {
+        nivel: 'Avanzado',
+        enunciado: String.raw`Un cartel tiene 4 ramas de 10 LEDs rojos con $180\,\Omega$ cada una, alimentado con una batería de 24 V y 7 Ah ($V_\gamma=1{,}84\,\text{V}$, $R_d=8\,\Omega$). Calculá la corriente por rama, la potencia total y la autonomía. ¿Cuánto dura si se lo atenúa con PWM al 50 %?`,
+        pista: String.raw`$I=\frac{V_i-nV_\gamma}{R+nR_d}$; $E=24\,\text{V}\cdot7\,\text{Ah}$; $t=E/P$.`,
+        solucion: String.raw`$I=\frac{24-18{,}4}{180+80}=21{,}5\,\text{mA}$. $P=4\cdot24\cdot0{,}0215=2{,}07\,\text{W}$. $E=168\,\text{Wh}$ → $t=\frac{168}{2{,}07}=81\,\text{h}$. Con $D=0{,}5$: $P=1{,}03\,\text{W}$ → 162 h. Verificalo en la simulación “Diseñador de matrices”.`,
+      },
+      {
+        nivel: 'Avanzado',
+        enunciado: String.raw`Una rama tiene una corriente de 21,5 mA cuando está encendida y se maneja con PWM al 60 % (R = 180 Ω). Calculá la corriente media, la eficaz y la potencia que disipa la resistencia. ¿Por qué la potencia no se calcula con la corriente media?`,
+        pista: String.raw`$I_{media}=D\,I$, $I_{ef}=I\sqrt D$, $P_R=I_{ef}^2R$.`,
+        solucion: String.raw`$I_{media}=0{,}6\cdot21{,}5=12{,}9\,\text{mA}$; $I_{ef}=21{,}5\sqrt{0{,}6}=16{,}7\,\text{mA}$; $P_R=0{,}0167^2\cdot180=50\,\text{mW}$ (= 60 % de los 83 mW con el LED siempre prendido). Con la media daría $0{,}0129^2\cdot180=30\,\text{mW}$, que está mal: el calor depende de $i^2$, y eso lo representa el valor eficaz.`,
+      },
     ],
 
     quiz: [
@@ -665,6 +922,11 @@ ${sieteSeg()}
       { pregunta: '¿Cuál es el cátodo de un LED de 5 mm?', opciones: ['La pata larga', 'La pata corta, del lado plano de la cápsula', 'Cualquiera, el LED no tiene polaridad', 'La pata del medio'], correcta: 1, explicacion: 'Pata larga = ánodo (+). Pata corta y lado plano = cátodo (−).' },
       { pregunta: 'Tres LEDs en paralelo con una sola resistencia común. ¿Qué pasa en la práctica?', opciones: ['Cada uno lleva exactamente un tercio de la corriente', 'El de menor VF se lleva la mayor parte de la corriente y puede quemarse', 'No prende ninguno', 'Brillan más que con una R cada uno'], correcta: 1, explicacion: 'Tienen la misma tensión; por la curva exponencial, una pequeña diferencia de VF produce una gran diferencia de corriente (y encima aparece el embalamiento térmico).' },
       { pregunta: 'Con analogWrite(9, 64) en un LED con resistencia calculada para 16 mA, la corriente media es aproximadamente…', opciones: ['16 mA', '8 mA', '4 mA', '64 mA'], correcta: 2, explicacion: 'D = 64/255 ≈ 25 %; I media = 0,25 · 16 mA = 4 mA. La corriente de pico sigue siendo 16 mA.' },
+      { pregunta: String.raw`En el modelo $V_D=V_\gamma+I_D R_d$, la resistencia $R_d$ se obtiene…`, opciones: ['Con V/I de un solo punto', 'Con ΔV/ΔI entre dos puntos de la zona recta', 'Midiendo con el óhmetro', 'Es siempre 0'], correcta: 1, explicacion: 'Es la inversa de la pendiente de la curva en la zona de conducción. V/I de un punto da otra cosa (la resistencia “estática”).' },
+      { pregunta: '¿Por qué conviene tomar los dos puntos en la zona de corrientes altas?', opciones: ['Porque son más fáciles de medir', 'Porque en el codo la curva no es recta y el modelo queda mal', 'Porque el LED brilla más', 'No importa'], correcta: 1, explicacion: 'El modelo lineal representa bien la zona donde va a trabajar el LED. En el codo la curva es exponencial.' },
+      { pregunta: 'Con 24 V y LEDs que necesitan 2 V cada uno, ¿cuántos conviene poner en serie por rama?', opciones: ['12', '11 o menos, para dejar tensión a la resistencia', '24', '1'], correcta: 1, explicacion: 'Con 12 no queda nada para la R y la corriente quedaría sin control. Se deja al menos un 10 % de la tensión para la resistencia.' },
+      { pregunta: 'Una batería de 12 V y 4 Ah alimenta una carga de 6 W. ¿Cuánto dura aproximadamente?', opciones: ['2 h', '4 h', '8 h', '48 h'], correcta: 2, explicacion: 'E = 12 V · 4 Ah = 48 Wh; t = 48 Wh / 6 W = 8 h.' },
+      { pregunta: 'Con PWM al 25 %, la potencia que disipa la resistencia limitadora respecto de tenerla siempre prendida es…', opciones: ['El 25 %', 'El 50 %', 'El 6,25 %', 'Igual'], correcta: 0, explicacion: 'P = I_ef²·R = (I√D)²·R = D·I²·R: la cuarta parte.' },
     ],
 
     docente: String.raw`
@@ -711,6 +973,18 @@ ${sieteSeg()}
 <h3>Experiencia práctica</h3>
 <p><b>En casa (con un kit básico):</b> protoboard, pila de 9 V (o fuente USB de 5 V), LEDs de varios colores y resistencias de 220 Ω, 470 Ω, 1 kΩ y 10 kΩ. (1) Medir con el multímetro en modo diodo la VF de cada color y comparar con la tabla. (2) Armar LED rojo + 470 Ω a 9 V y medir la tensión en el LED y en la R; calcular la corriente con la ley de Ohm en la R. (3) Cambiar a 10 kΩ y a 220 Ω: ver que la VF casi no cambia y la corriente sí. (4) Mirar un LED IR (o el control remoto) con la cámara del celular.</p>
 <p><b>Simulador:</b> en <b>Tinkercad Circuits</b> el LED se quema (aparece una “explosión”) si se pasa de corriente: es ideal para mostrar qué pasa sin resistencia sin gastar componentes. Armar también el RGB de cátodo común con Arduino y <code>analogWrite</code> en los pines 9, 10 y 11 para mezclar colores. En <b>Falstad</b> (falstad.com/circuit) se puede armar el paralelo con R común con LEDs de distinto color y ver cómo se reparte la corriente.</p>
+
+<h3>Ampliación: modelo con Rd y matrices de LEDs (secciones 6 y 7)</h3>
+<p><b>Por qué está:</b> en la carpeta se trabaja con $V_D=V_\gamma+I_D R_d'$, se obtiene $R_d=8\,\Omega$ y $V_\gamma=1{,}84\,\text{V}$ de una tabla medida, se calcula $I_{D,\text{máx}}$ con $P_{D,\text{máx}}$ y se diseña una matriz RGB con batería, autonomía y dimmer PWM. <b>Duración sugerida:</b> 2 clases (una para el modelo, otra para la matriz).</p>
+<ol>
+<li><b>Modelo (15 min):</b> mostrá la tabla y preguntá “¿podemos reemplazar esta curva por una recta? ¿en qué zona?”. Hacé el cálculo de $R_d$ y $V_\gamma$ en el pizarrón.</li>
+<li><b>Simulación 3 (10 min):</b> que elijan primero dos puntos buenos y después uno del codo, y comparen los $V_\gamma$ que salen.</li>
+<li><b>Potencia máxima (10 min):</b> la cuadrática. Muchos chicos se olvidan de la fórmula resolvente: repasala.</li>
+<li><b>Matriz (25 min):</b> el ejemplo de 24 V paso a paso. Discutí por qué se baja de 11 a 10 LEDs. Después la simulación 4: que busquen cuántas ramas se pueden poner para que la batería dure al menos 48 h.</li>
+<li><b>PWM (10 min):</b> la diferencia entre $I_{media}$ (consumo, brillo) e $I_{ef}$ (calentamiento).</li>
+</ol>
+<p><b>Errores frecuentes:</b> usar mA en $R_d=\Delta V/\Delta I$ y obtener 0,008; olvidar restar $n\,R_d$ en la resistencia limitadora; elegir el valor comercial inferior (da más corriente); calcular la autonomía con Ah en vez de Wh cuando las tensiones no coinciden.</p>
+<p><b>Repaso para vos:</b> resolvente $x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}$, con $a=R_d$, $b=V_\gamma$, $c=-P$. E12: 10–12–15–18–22–27–33–39–47–56–68–82. $E[\text{Wh}]=V\cdot C[\text{Ah}]$. PWM: $I_{med}=DI$, $I_{ef}=I\sqrt D$.</p>
 `,
   });
 })();

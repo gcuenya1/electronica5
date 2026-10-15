@@ -121,6 +121,15 @@
     return p;
   }
 
+  /* ---------- Ampliación: datos de los cinco rectificadores (diodos ideales, Ês = 1) ---------- */
+  const RECT_TIPOS = {
+    mo: { ndTot: 1, t: 'Monofásico media onda', corto: '1F ½ onda', f: (th) => Math.max(0, Math.sin(th)), fases: [0], k: 1 / Math.PI, kTex: String.raw`\frac{1}{\pi}`, nd: 1, id: 1, idTex: 'I_L', piv: 1, pivTex: String.raw`\hat E_s`, fu: 0.287, g: 1.211, pulsos: 1, tri: false },
+    pm: { ndTot: 2, t: 'Monofásico onda completa, punto medio', corto: '1F punto medio', f: (th) => Math.abs(Math.sin(th)), fases: [0, 180], k: 2 / Math.PI, kTex: String.raw`\frac{2}{\pi}`, nd: 1, id: 0.5, idTex: String.raw`\frac{I_L}{2}`, piv: 2, pivTex: String.raw`2\hat E_s`, fu: 0.573, g: 0.483, pulsos: 2, tri: false },
+    pu: { ndTot: 4, t: 'Monofásico puente de Graetz', corto: '1F puente', f: (th) => Math.abs(Math.sin(th)), fases: [0, 180], k: 2 / Math.PI, kTex: String.raw`\frac{2}{\pi}`, nd: 2, id: 0.5, idTex: String.raw`\frac{I_L}{2}`, piv: 1, pivTex: String.raw`\hat E_s`, fu: 0.811, g: 0.483, pulsos: 2, tri: false },
+    t3: { ndTot: 3, t: 'Trifásico media onda (3 diodos)', corto: '3F ½ onda', f: (th) => Math.max(Math.sin(th), Math.sin(th - 2.0944), Math.sin(th + 2.0944)), fases: [0, 120, 240], k: 3 * Math.sqrt(3) / (2 * Math.PI), kTex: '0{,}827', nd: 1, id: 1 / 3, idTex: String.raw`\frac{I_L}{3}`, piv: Math.sqrt(3), pivTex: String.raw`\sqrt3\,\hat E_s`, fu: 0.664, g: 0.183, pulsos: 3, tri: true },
+    t6: { ndTot: 6, t: 'Trifásico puente (6 diodos)', corto: '3F puente', f: (th) => { const a = [Math.sin(th), Math.sin(th - 2.0944), Math.sin(th + 2.0944)]; return Math.max(...a) - Math.min(...a); }, fases: [0, 120, 240], k: 3 * Math.sqrt(3) / Math.PI, kTex: '1{,}654', nd: 2, id: 1 / 3, idTex: String.raw`\frac{I_L}{3}`, piv: Math.sqrt(3), pivTex: String.raw`\sqrt3\,\hat E_s`, fu: 0.954, g: 0.042, pulsos: 6, tri: true },
+  };
+
   registrarTema({
     id: 'rectificadores',
     orden: 11,
@@ -273,7 +282,93 @@ En los rectificadores de onda completa cada diodo conduce solo en un semiciclo, 
 La pata <b>+</b> suele ser más larga o estar en una esquina biselada; el cuerpo tiene impresos los símbolos. Con el multímetro en prueba de diodos: de <b>−</b> a cada <b>~</b> marca ≈ 0,5–0,6 V (punta roja en −), y de cada <b>~</b> a <b>+</b> también. De <b>−</b> a <b>+</b> (roja en −) marca ≈ 1,1 V (dos diodos en serie).
 </div>
 
-<h2>10. ¿Y ahora qué falta?</h2>
+<!-- AMPLIACION-CARPETA -->
+<h2>10. ¿Qué tan bueno es un rectificador? Los parámetros de calidad</h2>
+<p>Ya sabemos calcular $V_{med}$ y $V_{ef}$ de cada rectificador. Con esos dos números se arman unos “índices” que permiten <b>comparar</b> rectificadores entre sí (y que aparecen siempre en los exámenes). En todas las fórmulas: $\hat E_s$ es la tensión pico del secundario, $V_L$ e $I_L$ son valores <b>medios</b> en la carga y $V_{ef}$, $I_{ef}$ los <b>eficaces</b>. Se supone carga resistiva y diodos ideales.</p>
+<div class="caja formula"><span class="caja-titulo">1. Factor de forma (FF): ¿cuánto se parece a una continua?</span>
+$$FF=\frac{V_{ef}}{V_{med}}$$
+<p>Para una continua perfecta $V_{ef}=V_{med}$ y $FF=1$. Cuanto más “pulsante” es la salida, más grande es FF. Media onda: $FF=\frac{\hat E_s/2}{\hat E_s/\pi}=\frac\pi2=1{,}57$. Onda completa: $FF=\frac{\hat E_s/\sqrt2}{2\hat E_s/\pi}=\frac{\pi}{2\sqrt2}=1{,}11$.</p>
+</div>
+<div class="caja formula"><span class="caja-titulo">2. Factor de ripple o de rizado (gamma): ¿cuánta alterna quedó “montada”?</span>
+$$\gamma=\frac{V_{CA}}{V_{med}}=\frac{\sqrt{V_{ef}^2-V_{med}^2}}{V_{med}}=\sqrt{FF^2-1}$$
+<p>Mide la componente alterna que acompaña a la continua de salida (se usa $V^2=V_{CC}^2+V_{CA}^2$, tema 5). Media onda: $\gamma=\sqrt{1{,}57^2-1}=1{,}21$ → ¡hay <b>121 %</b> de alterna respecto de la continua! Onda completa: $\gamma=\sqrt{1{,}11^2-1}=0{,}483$ (48 %). Ideal: $\gamma=0$.</p>
+</div>
+<div class="caja formula"><span class="caja-titulo">3. Rendimiento de conversión (eta c): ¿cuánto de la potencia es continua “útil”?</span>
+$$\eta_c=\frac{P_{CC}}{P_{total}}=\frac{V_{med}^2/R_L}{V_{ef}^2/R_L}=\frac{1}{FF^2}$$
+<p>De toda la potencia que llega a la carga, solo la parte de continua es la que buscamos. Media onda: $\eta_c=\frac{1}{1{,}57^2}=40{,}5\,\%$. Onda completa: $\eta_c=\frac1{1{,}11^2}=81{,}1\,\%$.</p>
+</div>
+<div class="caja formula"><span class="caja-titulo">4. Factor de utilización del transformador (FU): ¿se aprovecha el transformador?</span>
+$$FU=\frac{P_{CC}}{S_{secundario}}=\frac{V_L\cdot I_L}{E_s\cdot I_s}\qquad(E_s,\ I_s\ \text{eficaces del secundario})$$
+<p>Un transformador se elige por su potencia aparente $S$ (en VA). Si FU es bajo, hay que comprar un transformador <b>más grande</b> que la potencia que realmente usa la carga: $S_{trafo}=\frac{P_{CC}}{FU}$.</p>
+<ul>
+<li><b>Media onda:</b> $I_s=\frac{\hat I}{2}$ (circula medio ciclo) → $FU=\frac{(\hat E_s/\pi)(\hat I/\pi)}{(\hat E_s/\sqrt2)(\hat I/2)}=\frac{2\sqrt2}{\pi^2}=0{,}287$. Además circula continua por el secundario, que satura el núcleo.</li>
+<li><b>Punto medio (bifásico):</b> cada mitad del secundario trabaja medio ciclo → $FU=0{,}573$.</li>
+<li><b>Puente:</b> todo el secundario trabaja todo el ciclo, $I_s=\hat I/\sqrt2$ → $FU=\frac{8}{\pi^2}=0{,}811$.</li>
+</ul>
+</div>
+<div class="caja formula"><span class="caja-titulo">5. Corrientes en los diodos (para elegirlos)</span>
+$$I_{D,med}=\frac{I_L}{p}\qquad \hat I_D=\hat I_L\qquad PIV=\text{tensión inversa máxima}$$
+<p>$p$ = cantidad de diodos (o grupos de diodos) que se turnan para llevar la corriente de la carga.</p>
+<p>Media onda: $I_D=I_L$. Onda completa (punto medio o puente): $I_D=\frac{I_L}{2}$. Trifásico: $I_D=\frac{I_L}{3}$. Al elegir el diodo se deja margen: corriente media nominal ≥ 1,5 × $I_D$ y tensión inversa ≥ 1,5 × PIV.</p>
+</div>
+<div class="tabla-wrap"><table class="tabla">
+<tr><th>Monofásicos</th><th>$V_{med}$</th><th>$V_{ef}$</th><th>FF</th><th>γ</th><th>η<sub>c</sub></th><th>FU</th><th>$f_{salida}$</th><th>PIV</th></tr>
+<tr><td>Media onda</td><td>$0{,}318\,\hat E_s$</td><td>$0{,}5\,\hat E_s$</td><td>1,57</td><td>1,21</td><td>40,5 %</td><td>0,287</td><td>$f$</td><td>$\hat E_s$</td></tr>
+<tr><td>Punto medio</td><td>$0{,}637\,\hat E_s$</td><td>$0{,}707\,\hat E_s$</td><td>1,11</td><td>0,483</td><td>81,1 %</td><td>0,573</td><td>$2f$</td><td>$2\hat E_s$</td></tr>
+<tr><td>Puente</td><td>$0{,}637\,\hat E_s$</td><td>$0{,}707\,\hat E_s$</td><td>1,11</td><td>0,483</td><td>81,1 %</td><td>0,811</td><td>$2f$</td><td>$\hat E_s$</td></tr>
+</table></div>
+<div class="caja tip"><span class="caja-titulo">Para leer la tabla de un vistazo</span>
+FF y γ: <b>cuanto más chicos, mejor</b> (más parecida a una continua). η<sub>c</sub> y FU: <b>cuanto más grandes, mejor</b> (mejor aprovechamiento). El puente gana en todo entre los monofásicos.
+</div>
+
+<h2>11. Rectificadores polifásicos (trifásicos)</h2>
+<p>En la industria la energía llega en <b>trifásica</b>: tres tensiones senoidales iguales, desfasadas 120° entre sí (en Argentina, 220 V de fase y 380 V entre fases). Si las rectificamos, la salida queda <b>mucho más lisa</b>, porque antes de que una fase “baje”, ya está subiendo la siguiente.</p>
+${(() => {
+  const W = 520, H0 = 150, x0 = 30, x1 = 400, yc = 80, A = 55, N = 240;
+  const X = (u) => x0 + (x1 - x0) * u;
+  const ph = (u, k) => Math.sin(2 * Math.PI * 2 * u - k * 2 * Math.PI / 3);
+  const path = (f) => { let d = ''; for (let i = 0; i <= N; i++) { const u = i / N; d += (i ? 'L' : 'M') + X(u).toFixed(1) + ' ' + (yc - A * f(u)).toFixed(1); } return d; };
+  const cols = ['var(--c1)', 'var(--c3)', 'var(--c4)'];
+  const fases = [0, 1, 2].map(k => `<path d="${path(u => ph(u, k))}" fill="none" stroke-width="1.3" style="stroke:${cols[k]};opacity:.55"/>`).join('');
+  const sal = `<path d="${path(u => Math.max(ph(u, 0), ph(u, 1), ph(u, 2)))}" fill="none" stroke-width="3.5" style="stroke:var(--c2)"/>`;
+  const med = `<path d="M${x0} ${yc - A * 0.827}H${x1}" stroke-dasharray="5 4" stroke-width="1.5" style="stroke:var(--c2)"/><text x="${x1 + 8}" y="${yc - A * 0.827 + 4}" font-size="12" text-anchor="start" style="fill:var(--c2)">Vmed = 0,827·Ês</text>`;
+  return `<figure class="figura"><svg class="esq" viewBox="0 0 ${W} ${H0}" width="${W}" height="${H0}"><path d="M${x0} ${yc}H${x1 + 5}M${x0} 15V${H0 - 5}" stroke="currentColor" stroke-width="1.2" fill="none"/>${fases}${sal}${med}</svg><figcaption>Trifásico de media onda: en cada instante conduce el diodo de la fase más alta. La salida (naranja) nunca baja de la mitad del pico y tiene 3 “jorobas” por ciclo (150 Hz).</figcaption></figure>`;
+})()}
+<div class="tabla-wrap"><table class="tabla">
+<tr><th>Trifásicos</th><th>Diodos</th><th>$V_{med}$</th><th>FF</th><th>γ</th><th>η<sub>c</sub></th><th>FU</th><th>$f_{salida}$</th><th>$I_D$</th></tr>
+<tr><td>Media onda (estrella)</td><td>3</td><td>$0{,}827\,\hat E_s$</td><td>1,017</td><td>0,183</td><td>96,7 %</td><td>0,664</td><td>$3f$ (150 Hz)</td><td>$I_L/3$</td></tr>
+<tr><td>Onda completa en puente</td><td>6</td><td>$1{,}654\,\hat E_s$</td><td>1,0009</td><td>0,042</td><td>99,8 %</td><td>0,954</td><td>$6f$ (300 Hz)</td><td>$I_L/3$</td></tr>
+</table></div>
+<p>($\hat E_s$ es el pico de la tensión de <b>fase</b>.) Compará con el monofásico: el ripple baja de 48 % (puente monofásico) a <b>4 %</b> (puente trifásico) ¡sin ningún capacitor! Por eso los grandes cargadores, soldadoras y motores de continua industriales usan rectificadores trifásicos. También existen hexafásicos (6 fases, con transformadores especiales), todavía más lisos.</p>
+<div class="caja ejemplo"><span class="caja-titulo">¿De dónde sale 0,827?</span>
+Cada diodo conduce mientras su fase es la más alta: un tercio del ciclo: desde $30°$ hasta $150°$ (60° antes y 60° después de su pico). El promedio de la senoidal en ese tramo es
+$$V_{med}=\frac{1}{2\pi/3}\int_{\pi/6}^{5\pi/6}\hat E_s\,\text{sen}\,\theta\,d\theta=\frac{3\sqrt3}{2\pi}\,\hat E_s=0{,}827\,\hat E_s$$
+</div>
+
+<h2>12. Diseño completo de un rectificador (paso a paso)</h2>
+<p>Este es el tipo de problema del examen: <b>“Se quiere alimentar una carga de 2 kW y 120 V de continua a partir de la red de 220 V. Determinar diodos, transformador y fusible.”</b></p>
+<div class="caja formula"><span class="caja-titulo">Receta</span>
+<ol>
+<li><b>Corriente media en la carga:</b> $I_L=\frac{P}{V_L}$.</li>
+<li><b>Pico necesario</b> en la carga, despejando de $V_{med}$: puente $\hat V_L=\frac{\pi}{2}V_L$; media onda $\hat V_L=\pi V_L$; trifásico media onda $\hat V_L=\frac{V_L}{0{,}827}$.</li>
+<li><b>Secundario:</b> $\hat E_s=\hat V_L$ (+ caídas de los diodos si se consideran) y $E_s=\hat E_s/\sqrt2$. Relación: $a=\frac{220}{E_s}$.</li>
+<li><b>Diodos:</b> $I_{D,med}$, $\hat I_D=\hat V_L/R_L$ y PIV. Se eligen con margen.</li>
+<li><b>Transformador:</b> $S=\frac{P}{FU}$ (en VA).</li>
+<li><b>Fusible del primario:</b> con el rendimiento del transformador η: $I_1=\frac{S}{\eta\cdot220}$; se elige el valor comercial inmediato superior.</li>
+</ol>
+</div>
+<div class="caja ejemplo"><span class="caja-titulo">Resolución con un puente monofásico</span>
+$I_L=\frac{2000}{120}=16{,}7\,\text{A}$ y $R_L=\frac{120}{16{,}7}=7{,}2\,\Omega$.<br>
+$\hat V_L=\frac\pi2\cdot120=188{,}5\,\text{V}$ → secundario $E_s=\frac{188{,}5}{\sqrt2}=133\,\text{V}$ eficaces; relación $220/133=1{,}65$.<br>
+Diodos: $I_{D,med}=\frac{16{,}7}{2}=8{,}33\,\text{A}$; $\hat I_D=\frac{188{,}5}{7{,}2}=26{,}2\,\text{A}$; $PIV=188{,}5\,\text{V}$ → diodos de 15–20 A y 400 V (o un puente KBPC3504: 35 A, 400 V, con disipador).<br>
+Transformador: $S=\frac{2000}{0{,}811}=2466\,\text{VA}$ → se compra uno de 2,5 kVA.<br>
+Fusible (η = 85 %): $I_1=\frac{2466}{0{,}85\cdot220}=13{,}2\,\text{A}$ → fusible de 16 A.
+</div>
+<div class="caja ejemplo"><span class="caja-titulo">Y si se usa un trifásico de media onda…</span>
+$\hat E_s=\frac{120}{0{,}827}=145{,}1\,\text{V}$ por fase ($E_s=102{,}6\,\text{V}$ eficaces). Cada diodo: $I_D=\frac{16{,}7}{3}=5{,}56\,\text{A}$, $\hat I_D=\frac{145{,}1}{7{,}2}=20{,}2\,\text{A}$, $PIV=\sqrt3\,\hat E_s=251\,\text{V}$. Transformador: $S=\frac{2000}{0{,}664}=3012\,\text{VA}$ (repartidos en las 3 fases). Ripple: 18 % en vez de 48 %.
+</div>
+
+<h2>13. ¿Y ahora qué falta?</h2>
 <p>La salida del rectificador nunca cambia de signo, pero <b>baja a cero 100 veces por segundo</b>. Si alimentás un Arduino con eso, se reinicia; si alimentás un amplificador, se escucha un zumbido. Hace falta “guardar” energía en los picos para entregarla cuando la tensión baja: ese es el trabajo del <b>capacitor de filtro</b> (tema 12). Y para que la tensión no dependa de la carga ni de la red, al final va el <b>regulador</b> (tema 13).</p>
 `,
 
@@ -543,6 +638,118 @@ La pata <b>+</b> suele ser más larga o estar en una esquina biselada; el cuerpo
           upd();
         },
       },
+      {
+        titulo: 'Comparador de rectificadores: FF, γ, ηc y FU',
+        descripcion: 'Elegí el rectificador y mirá cómo cambia la forma de la salida y sus parámetros de calidad. Las barras de abajo comparan el ripple de los cinco tipos.',
+        montar(cont, H) {
+          const { controles, vista } = H.layout(cont);
+          const C = RECT_TIPOS;
+          const tipo = H.select(controles, { label: 'Rectificador', value: 'pu', onChange: upd, opciones: Object.entries(C).map(([k, o]) => ({ v: k, t: o.t })) });
+          const es = H.slider(controles, { label: 'Secundario (eficaz, por fase)', min: 6, max: 240, step: 1, value: 24, unidad: 'V', onInput: upd });
+          const rl = H.slider(controles, { label: 'Carga RL', min: 1, max: 1000, log: true, value: 100, unidad: 'Ω', onInput: upd });
+          const verEnt = H.check(controles, { label: 'Mostrar las tensiones de entrada', value: true, onChange: upd });
+          H.nota(controles, 'Diodos ideales. FF y γ: cuanto más chicos, más se parece a una continua. ηc y FU: cuanto más grandes, mejor.');
+          const cv = H.canvas(vista, { alto: 250, dibujar });
+          const lec = H.lecturas(vista);
+          const cvb = H.canvas(vista, { alto: 150, dibujar: barras });
+          let R = {};
+          function dibujar(ctx, w, h) {
+            const t = C[tipo.value], Ep = es.value * Math.SQRT2;
+            const ymax = (tipo.value === 't6' ? 1.9 : 1.15) * Ep;
+            const P = H.ejes(ctx, w, h, { xmin: 0, xmax: 720, ymin: -1.15 * Ep, ymax, xticks: [0, 90, 180, 270, 360, 450, 540, 630, 720], xlabel: 'ωt [°]', ylabel: 'v [V]' });
+            if (verEnt.value) t.fases.forEach((ph, k) => P.fn(g => Ep * Math.sin((g - ph) * Math.PI / 180), { color: H.col(['c1', 'c3', 'c4'][k % 3]), ancho: 1.2, guiones: [4, 4] }));
+            P.area(g => Ep * t.f(g * Math.PI / 180), { color: H.col('c2'), alfa: 0.15, n: 720 });
+            P.fn(g => Ep * t.f(g * Math.PI / 180), { color: H.col('c2'), ancho: 3, n: 1440 });
+            P.hline(R.med, { color: H.col('c2'), label: 'Vmed = ' + H.num(R.med, 1) + ' V', labelX: 715 });
+            P.hline(R.ef, { color: H.col('green'), label: 'Vef = ' + H.num(R.ef, 1) + ' V', labelX: 260 });
+          }
+          function barras(ctx, w, h) {
+            const ks = Object.keys(C), bw = (w - 40) / ks.length;
+            ctx.font = '600 11px sans-serif'; ctx.textAlign = 'center';
+            ks.forEach((k, i) => {
+              const g = C[k].g, x = 20 + bw * i + bw * 0.2, ww = bw * 0.6, hh = (h - 50) * g / 1.25;
+              ctx.fillStyle = H.col(k === tipo.value ? 'c2' : 'muted'); ctx.globalAlpha = k === tipo.value ? 1 : 0.45;
+              ctx.fillRect(x, h - 32 - hh, ww, hh); ctx.globalAlpha = 1;
+              ctx.fillStyle = H.col('ink'); ctx.fillText('γ = ' + H.num(g * 100, 1) + ' %', x + ww / 2, h - 36 - hh);
+              ctx.fillStyle = H.col('muted'); ctx.fillText(C[k].corto, x + ww / 2, h - 16);
+            });
+          }
+          function upd() {
+            const t = C[tipo.value], Ep = es.value * Math.SQRT2, N = 3600;
+            let s = 0, s2 = 0;
+            for (let i = 0; i < N; i++) { const v = Ep * t.f(2 * Math.PI * (i + 0.5) / N); s += v; s2 += v * v; }
+            const med = s / N, ef = Math.sqrt(s2 / N), FF = ef / med, g = Math.sqrt(FF * FF - 1);
+            R = { med, ef };
+            const IL = med / rl.value;
+            lec.set([
+              { k: 'Vmed (lo que marca V⎓)', v: H.num(med, 2) + ' V' },
+              { k: 'Vef total', v: H.num(ef, 2) + ' V' },
+              { k: 'Factor de forma FF', v: H.num(FF, 4) },
+              { k: 'Ripple γ', v: H.num(g, 3) + ' (' + H.num(g * 100, 0) + ' %)', estado: g < 0.2 ? 'ok' : g > 1 ? 'mal' : 'alerta' },
+              { k: 'Rendimiento ηc', v: H.num(100 / (FF * FF), 1) + ' %' },
+              { k: 'Factor de utilización FU', v: H.num(t.fu, 3) },
+              { k: 'Frecuencia de salida', v: t.pulsos * 50 + ' Hz' },
+              { k: 'IL media / ID media', v: H.fmt(IL, 'A') + ' / ' + H.fmt(IL * t.id, 'A') },
+              { k: 'PIV de cada diodo', v: H.num(t.piv * Ep, 1) + ' V' },
+            ]);
+            cv.redibujar(); cvb.redibujar();
+          }
+          upd();
+        },
+      },
+      {
+        titulo: 'Diseñá el rectificador (el problema del examen)',
+        descripcion: 'Poné la potencia y la tensión continua que necesita la carga, elegí el rectificador y obtené el secundario del transformador, los diodos, la potencia del transformador y el fusible, con todas las cuentas.',
+        montar(cont, H) {
+          const { controles, vista } = H.layout(cont);
+          const nL = (x, d) => H.num(x, d).replace(',', '{,}');
+          const C = RECT_TIPOS;
+          const pot = H.slider(controles, { label: 'Potencia de la carga P', min: 10, max: 10000, log: true, value: 2000, unidad: 'W', onInput: upd });
+          const vl = H.slider(controles, { label: 'Tensión continua (media) VL', min: 5, max: 300, step: 1, value: 120, unidad: 'V', onInput: upd });
+          const tipo = H.select(controles, { label: 'Rectificador', value: 'pu', onChange: upd, opciones: Object.entries(C).map(([k, o]) => ({ v: k, t: o.t })) });
+          const eta = H.slider(controles, { label: 'Rendimiento del transformador η', min: 0.7, max: 0.98, step: 0.01, value: 0.85, fmt: v => H.num(v * 100, 0) + ' %', onInput: upd });
+          const caida = H.check(controles, { label: 'Considerar 0,7 V por diodo', value: false, onChange: upd });
+          H.nota(controles, 'Red: 220 V de fase (monofásica) o 3 × 220/380 V (trifásica). Margen para elegir diodos: 1,5 × corriente media y 1,5 × PIV.');
+          const lec = H.lecturas(vista);
+          const pasos = H.nota(vista, '');
+          const sup = (x, lista) => lista.find(v => v >= x * (1 - 1e-9)) ?? NaN;
+          const FUS = [0.5, 1, 1.6, 2, 2.5, 3.15, 4, 5, 6.3, 8, 10, 12, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160];
+          const DI = [1, 3, 6, 10, 15, 20, 25, 35, 40, 50, 70, 100, 150];
+          const DV = [50, 100, 200, 400, 600, 800, 1000, 1200, 1600];
+          function upd() {
+            const t = C[tipo.value], P = pot.value, V = vl.value;
+            const IL = P / V, RL = V / IL;
+            const Vp = V / t.k;
+            const Ep = Vp + (caida.value ? 0.7 * t.nd : 0);
+            const Es = Ep / Math.SQRT2;
+            const ID = IL * t.id, IDp = Vp / RL, PIV = t.piv * Ep;
+            const S = P / t.fu;
+            const fases = t.tri ? 3 : 1;
+            const I1 = S / (fases * eta.value * 220);
+            const fus = sup(I1 * 1.0, FUS);
+            const dI = sup(1.5 * ID, DI), dV = sup(1.5 * PIV, DV);
+            lec.set([
+              { k: 'Corriente media IL', v: H.num(IL, 2) + ' A' },
+              { k: 'Secundario (eficaz' + (t.tri ? ', por fase)' : ')'), v: H.num(Es, 1) + ' V', estado: 'ok' },
+              { k: 'Relación de transformación', v: H.num(220 / Es, 2) + ' : 1' },
+              { k: 'Diodo: I media / I pico', v: H.num(ID, 2) + ' A / ' + H.num(IDp, 1) + ' A' },
+              { k: 'Diodo: PIV', v: H.num(PIV, 1) + ' V' },
+              { k: 'Diodo sugerido', v: (Number.isFinite(dI) ? dI + ' A' : '> 150 A') + ' / ' + (Number.isFinite(dV) ? dV + ' V' : '> 1600 V') + ' (× ' + t.ndTot + ')', estado: 'ok' },
+              { k: 'Transformador S = P / FU', v: H.num(S, 0) + ' VA' },
+              { k: 'Fusible del primario' + (t.tri ? ' (por fase)' : ''), v: H.num(I1, 2) + ' A → ' + (Number.isFinite(fus) ? H.num(fus, 2) + ' A' : '> 160 A'), estado: 'ok' },
+            ]);
+            pasos.innerHTML = String.raw`<b>Cuentas:</b><br>
+              1) $I_L=\frac{P}{V_L}=\frac{${nL(P, 0)}}{${nL(V, 0)}}=${nL(IL, 2)}\,\text{A}$; $R_L=\frac{V_L}{I_L}=${nL(RL, 2)}\,\Omega$.<br>
+              2) $V_{med}=${t.kTex}\,\hat V_L\Rightarrow\hat V_L=\frac{${nL(V, 0)}}{${nL(t.k, 3)}}=${nL(Vp, 1)}\,\text{V}$${caida.value ? String.raw`; sumando ${t.nd === 1 ? '0{,}7' : '1{,}4'} V de diodos: $\hat E_s=${nL(Ep, 1)}\,\text{V}$` : ''}.<br>
+              3) $E_s=\frac{\hat E_s}{\sqrt2}=${nL(Es, 1)}\,\text{V}$ ${t.tri ? '(de fase)' : ''}; relación $\frac{220}{${nL(Es, 1)}}=${nL(220 / Es, 2)}$.<br>
+              4) Diodos: $I_{D}=${t.idTex}=${nL(ID, 2)}\,\text{A}$; $\hat I_D=\frac{\hat V_L}{R_L}=${nL(IDp, 1)}\,\text{A}$; $PIV=${t.pivTex}=${nL(PIV, 1)}\,\text{V}$.<br>
+              5) $S=\frac{P}{FU}=\frac{${nL(P, 0)}}{${nL(t.fu, 3)}}=${nL(S, 0)}\,\text{VA}$.<br>
+              6) $I_1=\frac{S}{${t.tri ? '3\\cdot' : ''}\eta\cdot220}=\frac{${nL(S, 0)}}{${t.tri ? '3\\cdot' : ''}${nL(eta.value, 2)}\cdot220}=${nL(I1, 2)}\,\text{A}$ → ${Number.isFinite(fus) ? 'fusible de ' + H.num(fus, 2) + ' A' : 'más de 160 A: se usa un interruptor termomagnético'}.`;
+            if (window.renderMathInElement) renderMathInElement(pasos, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
+          }
+          upd();
+        },
+      },
     ],
 
     ejercicios: [
@@ -588,6 +795,36 @@ La pata <b>+</b> suele ser más larga o estar en una esquina biselada; el cuerpo
         pista: String.raw`Si D2 está abierto, el par D2‑D3 ya no puede conducir: pensá qué semiciclo se pierde.`,
         solucion: String.raw`<b>D2 abierto:</b> en el semiciclo negativo no hay camino, y el circuito queda como <b>media onda</b> (con 2 diodos en serie): $V_{med}=\frac{19{,}81}{\pi}=6{,}31\,\text{V}$ (la mitad) y $f_{sal}=50\,\text{Hz}$. Con un osciloscopio se ve una “joroba” sí y otra no. <b>D2 en corto:</b> en el semiciclo positivo D1 conduce y D2 (en corto) une el vértice inferior con el + → el secundario queda en cortocircuito a través de D1 y D2. Circula una corriente enorme: se quema D1, el fusible o el transformador. Por eso las fuentes llevan fusible.`,
       },
+      {
+        nivel: 'Básico',
+        enunciado: String.raw`Para un rectificador de media onda, partiendo de $V_{med}=\hat E_s/\pi$ y $V_{ef}=\hat E_s/2$, calculá el factor de forma, el factor de ripple y el rendimiento de conversión. Interpretá el resultado de γ.`,
+        pista: String.raw`$FF=V_{ef}/V_{med}$; $\gamma=\sqrt{FF^2-1}$; $\eta_c=1/FF^2$.`,
+        solucion: String.raw`$FF=\frac{\hat E_s/2}{\hat E_s/\pi}=\frac\pi2=1{,}571$. $\gamma=\sqrt{1{,}571^2-1}=1{,}21$. $\eta_c=\frac{1}{1{,}571^2}=0{,}405=40{,}5\,\%$. γ = 121 % significa que la componente alterna (eficaz) que acompaña a la salida es <b>más grande</b> que la continua: la media onda sin filtro es muy mala.`,
+      },
+      {
+        nivel: 'Básico',
+        enunciado: String.raw`Repetí el ejercicio anterior para un puente de onda completa ($V_{med}=2\hat E_s/\pi$, $V_{ef}=\hat E_s/\sqrt2$) y calculá además el factor de utilización del transformador sabiendo que $I_s=\hat I/\sqrt2$.`,
+        pista: String.raw`$FU=\frac{V_L I_L}{E_s I_s}$ con $V_L=\frac{2\hat E_s}{\pi}$, $I_L=\frac{2\hat I}{\pi}$, $E_s=\frac{\hat E_s}{\sqrt2}$.`,
+        solucion: String.raw`$FF=\frac{\pi}{2\sqrt2}=1{,}11$; $\gamma=\sqrt{1{,}11^2-1}=0{,}483$; $\eta_c=\frac1{1{,}11^2}=81{,}1\,\%$. $FU=\frac{(2\hat E_s/\pi)(2\hat I/\pi)}{(\hat E_s/\sqrt2)(\hat I/\sqrt2)}=\frac{4/\pi^2}{1/2}=\frac{8}{\pi^2}=0{,}811$.`,
+      },
+      {
+        nivel: 'Intermedio',
+        enunciado: String.raw`Se necesita alimentar una carga de 2 kW y 120 V de continua desde la red de 220 V con un puente de diodos (diodos ideales, sin filtro). Calculá: corriente media en la carga, tensión eficaz del secundario, corriente media y pico por diodo, PIV, potencia del transformador y el fusible del primario si el transformador tiene η = 85 %.`,
+        pista: String.raw`$\hat V_L=\frac{\pi}{2}V_L$; $S=P/FU$ con $FU=0{,}811$; $I_1=\frac{S}{\eta\cdot220}$.`,
+        solucion: String.raw`$I_L=16{,}7\,\text{A}$, $R_L=7{,}2\,\Omega$. $\hat V_L=188{,}5\,\text{V}$ → $E_s=133\,\text{V}$. $I_{D}=8{,}33\,\text{A}$, $\hat I_D=26{,}2\,\text{A}$, $PIV=188{,}5\,\text{V}$. $S=\frac{2000}{0{,}811}=2466\,\text{VA}$. $I_1=\frac{2466}{0{,}85\cdot220}=13{,}2\,\text{A}$ → fusible de 16 A. Diodos de al menos 15 A / 400 V (o puente de 35 A / 400 V con disipador).`,
+      },
+      {
+        nivel: 'Intermedio',
+        enunciado: String.raw`La misma carga (2 kW, 120 V) se alimenta con un rectificador <b>trifásico de media onda</b>. Calculá la tensión pico y eficaz de cada fase del secundario, la corriente media y pico de cada diodo y la potencia del transformador. ¿Cuánto vale el ripple?`,
+        pista: String.raw`$V_{med}=0{,}827\,\hat E_s$; cada diodo conduce un tercio del ciclo: $I_D=I_L/3$. $FU=0{,}664$.`,
+        solucion: String.raw`$\hat E_s=\frac{120}{0{,}827}=145{,}1\,\text{V}$ → $E_s=102{,}6\,\text{V}$ por fase. $I_D=\frac{16{,}7}{3}=5{,}56\,\text{A}$; $\hat I_D=\frac{145{,}1}{7{,}2}=20{,}2\,\text{A}$; $PIV=\sqrt3\cdot145{,}1=251\,\text{V}$. $S=\frac{2000}{0{,}664}=3012\,\text{VA}$. Ripple $\gamma=0{,}183$ (18 %), contra 48 % del puente monofásico.`,
+      },
+      {
+        nivel: 'Avanzado',
+        enunciado: String.raw`Ordená de mejor a peor, según el ripple, los cinco rectificadores (media onda, punto medio, puente, trifásico de media onda y trifásico en puente). ¿Por qué el punto medio y el puente monofásico tienen el mismo γ pero distinto FU? ¿Cuál conviene para cargar baterías de un autoelevador de 48 V y 200 A?`,
+        pista: String.raw`γ depende solo de la forma de onda de la salida. FU depende de cómo trabaja el transformador.`,
+        solucion: String.raw`Trifásico puente (4,2 %) → trifásico media onda (18 %) → puente = punto medio (48 %) → media onda (121 %). Punto medio y puente dan la <b>misma salida</b> (por eso igual γ), pero en el punto medio cada mitad del secundario trabaja solo medio ciclo: el transformador se aprovecha peor (0,573 contra 0,811). Para 48 V × 200 A ≈ 10 kW, lo lógico es un <b>trifásico en puente</b>: reparte la carga en las tres fases, casi no tiene ripple y aprovecha el transformador al 95 %.`,
+      },
     ],
 
     quiz: [
@@ -597,6 +834,11 @@ La pata <b>+</b> suele ser más larga o estar en una esquina biselada; el cuerpo
       { pregunta: 'En el puente de Graetz, durante el semiciclo positivo conducen…', opciones: ['Los cuatro diodos', 'Un solo diodo', 'Dos diodos en serie con la carga', 'Ninguno'], correcta: 2, explicacion: 'Siempre conducen dos (D1 y D4, o D2 y D3), en serie con la carga. Por eso se pierden 1,4 V.' },
       { pregunta: String.raw`El multímetro en V⎓ sobre la salida de un rectificador de media onda (sin filtro) marca…`, opciones: ['El valor pico', 'El valor medio, Vp/π', 'El valor eficaz, Vp/√2', 'Cero'], correcta: 1, explicacion: 'En continua el instrumento promedia: muestra el valor medio, que en media onda es Vp/π ≈ 0,32·Vp.' },
       { pregunta: '¿Por qué el puente es la configuración más usada?', opciones: ['Porque usa un solo diodo', 'Porque da onda completa con un transformador común y PIV = Vp', 'Porque no tiene caída de tensión', 'Porque da una continua sin rizado'], correcta: 1, explicacion: 'No necesita toma central, sus diodos soportan solo Vp y viene integrado y barato. Su única contra es perder 1,4 V.' },
+      { pregunta: 'El factor de ripple γ de un rectificador de media onda sin filtro vale aproximadamente…', opciones: ['0,04', '0,48', '1,21', '1,57'], correcta: 2, explicacion: 'γ = √(FF² − 1) = √(1,57² − 1) ≈ 1,21: la alterna que queda es mayor que la continua.' },
+      { pregunta: 'Si el factor de forma de una salida es exactamente 1, entonces…', opciones: ['Es una continua perfecta', 'Es una senoidal', 'El rectificador está roto', 'No hay corriente'], correcta: 0, explicacion: 'FF = Vef/Vmed = 1 solo cuando la tensión es constante: no hay ripple.' },
+      { pregunta: '¿Para qué sirve el factor de utilización del transformador?', opciones: ['Para calcular la PIV', 'Para saber cuántos VA debe tener el transformador: S = P/FU', 'Para calcular el ripple', 'Para elegir el fusible del secundario'], correcta: 1, explicacion: 'Con FU bajo hay que comprar un transformador más grande que la potencia de la carga. En media onda, ¡3,5 veces más grande!' },
+      { pregunta: 'En un rectificador trifásico de media onda conectado a la red de 50 Hz, la frecuencia del ripple es…', opciones: ['50 Hz', '100 Hz', '150 Hz', '300 Hz'], correcta: 2, explicacion: 'Hay tres “jorobas” por ciclo, una por fase: 3 × 50 = 150 Hz. En el puente trifásico son 6: 300 Hz.' },
+      { pregunta: 'El rendimiento de conversión de un puente monofásico es 81 %. ¿Qué significa?', opciones: ['Que el 19 % se pierde en los diodos', 'Que el 81 % de la potencia en la carga es continua y el resto, alterna', 'Que el transformador calienta', 'Que el fusible soporta el 81 %'], correcta: 1, explicacion: 'ηc = Pcc/Ptotal = 1/FF². Con diodos ideales no hay pérdidas: el 19 % restante es la potencia de la componente alterna (ripple).' },
     ],
 
     docente: String.raw`
@@ -647,6 +889,27 @@ La pata <b>+</b> suele ser más larga o estar en una esquina biselada; el cuerpo
 <p><b>En simulador (Falstad, circuitjs):</b> menú Circuits → Diodes → Full‑Wave Rectifier. Cambiá a media onda borrando diodos, y mirá la corriente animada (los puntitos amarillos) en cada semiciclo. Agregá un osciloscopio sobre la carga y compará con lo que ves en la simulación 1.</p>
 <p><b>En Tinkercad:</b> generador de funciones (senoidal 10 V pico, 50 Hz) + puente con 4 1N4007 + resistencia de 1 kΩ + osciloscopio y multímetro. Medí en V⎓ y comparalo con $2V_{p,sal}/\pi$.</p>
 <p><b>Real (con supervisión):</b> transformador de 9 o 12 V ya cableado con fusible, puente W04, lámpara de 12 V o resistencia de 100 Ω/2 W. Medí con el multímetro el secundario en V~ y la salida en V⎓ y V~. Si tenés osciloscopio, ver las “jorobas” de 100 Hz es muy convincente.</p>
+
+<h3>Ampliación: parámetros de calidad, trifásicos y diseño (secciones 10, 11 y 12)</h3>
+<p><b>Por qué está:</b> en la carpeta se calcularon FF, γ, η<sub>c</sub> y FU para media onda, bifásico (punto medio) y puente; los trifásicos de media onda y en puente; y el problema del examen del 7/8 (2 kW, 120 V desde 220 V, con diodos, transformador y fusible con η = 85 %). <b>Duración sugerida:</b> 2 clases.</p>
+<ol>
+<li><b>Motivación (5 min):</b> “Dos rectificadores dan 12 V en V⎓. ¿Son igual de buenos?”. Mostrá en la simulación 3 la media onda y el puente con el mismo $V_{med}$.</li>
+<li><b>FF y γ (20 min):</b> deducí los de media onda en el pizarrón (ejercicio 8). Relacioná γ con $V^2=V_{CC}^2+V_{CA}^2$ del tema 5: es la misma idea.</li>
+<li><b>η<sub>c</sub> y FU (20 min):</b> η<sub>c</sub> sale directo de FF. Para FU, dibujá la corriente del secundario en cada caso (media onda: solo medio ciclo; puente: todo el ciclo) y calculá el eficaz.</li>
+<li><b>Trifásicos (15 min):</b> dibujá las tres fases desfasadas 120° y pedí que marquen “cuál es la más alta” en cada momento. Con la simulación, mirá las barras de γ.</li>
+<li><b>Diseño (30 min):</b> resolvé el ejercicio 10 en el pizarrón siguiendo la receta. Después que lo verifiquen con la simulación 4 y cambien a trifásico.</li>
+</ol>
+<p><b>Errores frecuentes:</b> calcular γ con valores pico en vez de eficaces; confundir $V_L$ (medio) con $\hat V_L$; usar FU para calcular la corriente del diodo; en trifásico, olvidar que $\hat E_s$ es de fase y que la PIV es $\sqrt3\hat E_s$ (tensión de línea); elegir el fusible con la potencia de la carga en vez de la del transformador.</p>
+<p><b>Repaso para vos (diodos ideales):</b></p>
+<div class="tabla-wrap"><table class="tabla">
+<tr><th></th><th>$V_{med}/\hat E_s$</th><th>FF</th><th>γ</th><th>η<sub>c</sub></th><th>FU</th></tr>
+<tr><td>Media onda</td><td>$1/\pi=0{,}318$</td><td>$\pi/2$</td><td>1,21</td><td>40,5 %</td><td>$2\sqrt2/\pi^2=0{,}287$</td></tr>
+<tr><td>Punto medio</td><td>$2/\pi=0{,}637$</td><td>$\pi/(2\sqrt2)$</td><td>0,483</td><td>81,1 %</td><td>$4\sqrt2/\pi^2=0{,}573$</td></tr>
+<tr><td>Puente</td><td>$2/\pi$</td><td>1,11</td><td>0,483</td><td>81,1 %</td><td>$8/\pi^2=0{,}811$</td></tr>
+<tr><td>3F media onda</td><td>$3\sqrt3/(2\pi)=0{,}827$</td><td>1,017</td><td>0,183</td><td>96,7 %</td><td>0,664</td></tr>
+<tr><td>3F puente</td><td>$3\sqrt3/\pi=1{,}654$</td><td>1,0009</td><td>0,042</td><td>99,8 %</td><td>0,954</td></tr>
+</table></div>
+<p>Algunos libros dan valores de FU un poco distintos según tomen el secundario, el primario o el promedio de ambos (por ejemplo, 0,693 para el punto medio). Los de la tabla son los de la carpeta (secundario).</p>
 `,
   });
 })();

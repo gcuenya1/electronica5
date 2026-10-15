@@ -105,10 +105,68 @@ $$I_1=\frac{12\cdot5-(-3)(-6)}{11}=\frac{42}{11}=3{,}82\,\text{mA}\qquad I_2=\fr
 $I_{R3}=I_1-I_2=2{,}73\,\text{mA}$ (hacia abajo). Podés comprobarlo en la simulación.
 </div>
 
-<h2>7. Superposición</h2>
+<!-- AMPLIACION-CARPETA -->
+<h2>7. Método de nodos (tensiones de nodo)</h2>
+<p>Mallas usa como incógnitas <b>corrientes</b> que “giran” por cada ventana del circuito. El método de nodos hace lo contrario: las incógnitas son las <b>tensiones de los nodos</b> medidas respecto de un nodo de referencia (masa). Es el método ideal cuando el circuito tiene <b>fuentes de corriente</b>, y es el que usan internamente los simuladores como Falstad o LTspice.</p>
+<div class="caja idea"><span class="caja-titulo">La idea en una frase</span>
+En cada nodo, <b>lo que entra = lo que sale</b> (LKC). Y la corriente que sale por una resistencia se escribe con Ohm usando las tensiones de sus dos extremos: $I=\frac{V_{\text{acá}}-V_{\text{allá}}}{R}$.
+</div>
+${Esq.svg(400, 215, [
+  Esq.cable([[40, 150], [40, 190], [340, 190], [340, 150]]), Esq.cable([[40, 80], [40, 40], [340, 40], [340, 80]]),
+  Esq.fuenteI(40, 150, 40, 80, 'IF1', '', -1),
+  Esq.R(120, 40, 120, 190, 'R1', '', 1),
+  Esq.R(170, 40, 230, 40, 'R3', '', 1),
+  Esq.R(260, 40, 260, 190, 'R2', '', -1),
+  Esq.fuenteI(340, 150, 340, 80, 'IF2', '', 1),
+  Esq.nodo(120, 40), Esq.nodo(260, 40), Esq.nodo(120, 190), Esq.nodo(260, 190),
+  Esq.cable([[120, 40], [170, 40]]), Esq.cable([[230, 40], [260, 40]]),
+  Esq.texto(120, 25, 'V1', { color: 'var(--c2)' }), Esq.texto(260, 25, 'V2', { color: 'var(--c4)' }),
+  Esq.masa(190, 190), Esq.texto(230, 207, 'referencia (0 V)', { size: 11, peso: 400, anchor: 'start' }),
+], 'Dos fuentes de corriente “inyectan” corriente en los nodos 1 y 2. Hay 3 nodos: el de abajo es la referencia, así que quedan 2 incógnitas: V1 y V2.')}
+<div class="caja formula"><span class="caja-titulo">Receta en 5 pasos</span>
+<ol>
+<li><b>Elegí la referencia</b> (masa): conviene el nodo donde se juntan más ramas. Vale 0 V.</li>
+<li><b>Nombrá las tensiones</b> de los otros nodos: $V_1$, $V_2$… Con $n$ nodos hay $n-1$ incógnitas.</li>
+<li><b>Escribí LKC en cada nodo</b> (menos la referencia): corrientes de fuentes que entran = corrientes que salen por las resistencias.</li>
+<li><b>Ordená</b> el sistema: términos con $V_1$, términos con $V_2$, y las fuentes a la derecha.</li>
+<li><b>Resolvé</b> (Cramer, sustitución o igualación) y con las tensiones calculá cualquier corriente: $I=\Delta V/R$.</li>
+</ol>
+</div>
+<p>Para el circuito de la figura:</p>
+$$\text{Nodo 1:}\quad I_{F1}=\frac{V_1}{R_1}+\frac{V_1-V_2}{R_3}\qquad\qquad \text{Nodo 2:}\quad I_{F2}+\frac{V_1-V_2}{R_3}=\frac{V_2}{R_2}$$
+<p>Ordenando (agrupamos lo que multiplica a cada incógnita):</p>
+$$\begin{cases}\left(\dfrac1{R_1}+\dfrac1{R_3}\right)V_1-\dfrac1{R_3}\,V_2=I_{F1}\\[2mm] -\dfrac1{R_3}\,V_1+\left(\dfrac1{R_2}+\dfrac1{R_3}\right)V_2=I_{F2}\end{cases}$$
+<div class="caja tip"><span class="caja-titulo">Truco para armar el sistema “a ojo”</span>
+<ul>
+<li>En la <b>diagonal</b> va la suma de las conductancias ($1/R$) que tocan ese nodo.</li>
+<li><b>Fuera de la diagonal</b> va <b>menos</b> la conductancia que une los dos nodos.</li>
+<li>A la <b>derecha</b>, la suma de las corrientes de fuente que <b>entran</b> al nodo (si sale, va con signo −).</li>
+</ul>
+Es el mismo truco que en mallas, pero con conductancias y corrientes en vez de resistencias y tensiones.
+</div>
+<div class="caja ejemplo"><span class="caja-titulo">Ejemplo numérico (el de la carpeta)</span>
+$I_{F1}=3{,}1\,\text{mA}$, $I_{F2}=1{,}4\,\text{mA}$, $R_1=2\,\text{k}\Omega$, $R_2=4\,\text{k}\Omega$, $R_3=5\,\text{k}\Omega$. Trabajando en kΩ, mA y V:
+$$\begin{cases}\left(\tfrac12+\tfrac15\right)V_1-\tfrac15V_2=3{,}1\\[1mm]-\tfrac15V_1+\left(\tfrac14+\tfrac15\right)V_2=1{,}4\end{cases}\Rightarrow\begin{cases}0{,}7\,V_1-0{,}2\,V_2=3{,}1\\-0{,}2\,V_1+0{,}45\,V_2=1{,}4\end{cases}$$
+$$\Delta=0{,}7\cdot0{,}45-(-0{,}2)(-0{,}2)=0{,}275=\tfrac{11}{40}$$
+$$V_1=\frac{\begin{vmatrix}3{,}1&-0{,}2\\1{,}4&0{,}45\end{vmatrix}}{\Delta}=\frac{1{,}395+0{,}28}{0{,}275}=6{,}09\,\text{V}\qquad V_2=\frac{\begin{vmatrix}0{,}7&3{,}1\\-0{,}2&1{,}4\end{vmatrix}}{\Delta}=\frac{0{,}98+0{,}62}{0{,}275}=5{,}82\,\text{V}$$
+Corrientes: $I_{R1}=\frac{6{,}09}{2}=3{,}05\,\text{mA}$, $I_{R2}=\frac{5{,}82}{4}=1{,}45\,\text{mA}$, $I_{R3}=\frac{6{,}09-5{,}82}{5}=0{,}055\,\text{mA}$ (de 1 hacia 2).<br>
+<b>Control:</b> en el nodo 1 entran 3,1 mA y salen $3{,}05+0{,}055=3{,}1\,\text{mA}$ ✓.
+</div>
+<div class="caja ojo"><span class="caja-titulo">¿Y si hay una fuente de tensión?</span>
+Si la fuente de tensión $V$ está <b>en serie con una resistencia</b> $R$, la cambiás por una fuente de corriente $I=V/R$ con la misma $R$ en paralelo (<b>transformación de fuentes</b>, es el equivalente de Norton). Si la fuente de tensión va directo entre un nodo y masa, ese nodo ya tiene tensión conocida: una incógnita menos.
+</div>
+<div class="tabla-wrap"><table class="tabla">
+<tr><th></th><th>Mallas</th><th>Nodos</th></tr>
+<tr><td>Incógnitas</td><td>Corrientes de malla</td><td>Tensiones de nodo</td></tr>
+<tr><td>Ley que se usa</td><td>LKT (suma de tensiones = 0)</td><td>LKC (lo que entra = lo que sale)</td></tr>
+<tr><td>Conviene cuando hay…</td><td>fuentes de tensión, pocas mallas</td><td>fuentes de corriente, pocos nodos</td></tr>
+<tr><td>Diagonal del sistema</td><td>suma de R de la malla</td><td>suma de 1/R del nodo</td></tr>
+</table></div>
+
+<h2>8. Superposición</h2>
 <p>Con varias fuentes, la respuesta total es la <b>suma</b> de las respuestas de cada fuente actuando sola. Para “apagar” una fuente de tensión se la reemplaza por un <b>cortocircuito</b> (una de corriente, por un <b>circuito abierto</b>). Es la consecuencia directa de que el circuito sea lineal.</p>
 
-<h2>8. Teorema de Thévenin</h2>
+<h2>9. Teorema de Thévenin</h2>
 <p>Cualquier circuito lineal visto desde dos bornes A‑B se puede reemplazar por <b>una fuente $V_{th}$ en serie con una resistencia $R_{th}$</b>. Es muy útil cuando queremos ver qué pasa al cambiar solo la carga.</p>
 <ol>
 <li>Sacá la carga. <b>$V_{th}$</b> = tensión entre A y B a circuito abierto.</li>
@@ -212,7 +270,63 @@ El divisor de tensión que polariza la base de un transistor (tema 14) se simpli
         upd();
       },
     },
-  ],
+    {
+      titulo: 'Resolución por nodos (2 nodos)',
+      descripcion: 'Cambiá las fuentes de corriente y las resistencias: el sistema, Cramer y las corrientes de cada rama se actualizan solos. Probá poner una fuente negativa (sale del nodo en vez de entrar).',
+      montar(cont, H) {
+        const { controles, vista } = H.layout(cont);
+        const i1 = H.slider(controles, { label: 'IF1 (entra al nodo 1)', min: -10, max: 10, step: 0.1, value: 3.1, fmt: v => H.num(v, 1) + ' mA', onInput: upd });
+        const i2 = H.slider(controles, { label: 'IF2 (entra al nodo 2)', min: -10, max: 10, step: 0.1, value: 1.4, fmt: v => H.num(v, 1) + ' mA', onInput: upd });
+        const r1 = H.slider(controles, { label: 'R1', min: 0.1, max: 10, step: 0.1, value: 2, fmt: v => H.num(v, 1) + ' kΩ', onInput: upd });
+        const r2 = H.slider(controles, { label: 'R2', min: 0.1, max: 10, step: 0.1, value: 4, fmt: v => H.num(v, 1) + ' kΩ', onInput: upd });
+        const r3 = H.slider(controles, { label: 'R3 (entre nodos)', min: 0.1, max: 10, step: 0.1, value: 5, fmt: v => H.num(v, 1) + ' kΩ', onInput: upd });
+        H.nota(controles, 'Unidades cómodas: kΩ, mA y V. Así 1/R queda en mS (milisiemens) y no hay que andar con potencias de 10.');
+        const fig = H.el('div'); vista.append(fig);
+        const lec = H.lecturas(vista);
+        const pasos = H.nota(vista);
+        function upd() {
+          const I1 = i1.value, I2 = i2.value, R1 = r1.value, R2 = r2.value, R3 = r3.value;
+          const a = 1 / R1 + 1 / R3, b = -1 / R3, c = -1 / R3, d = 1 / R2 + 1 / R3;
+          const D = a * d - b * c;
+          const V1 = (I1 * d - b * I2) / D;
+          const V2 = (a * I2 - c * I1) / D;
+          const IR1 = V1 / R1, IR2 = V2 / R2, IR3 = (V1 - V2) / R3;
+          const n = (x, k = 3) => H.num(x, k);
+          const L = (x, k = 3) => H.num(x, k).replace(',', '{,}');
+          const flecha3 = IR3 >= 0 ? Esq.flecha(175, 62, 225, 62, '', 'var(--c3)') : Esq.flecha(225, 62, 175, 62, '', 'var(--c3)');
+          fig.innerHTML = Esq.svg(400, 215, [
+            Esq.cable([[40, 150], [40, 190], [340, 190], [340, 150]]), Esq.cable([[40, 80], [40, 40], [340, 40], [340, 80]]),
+            I1 >= 0 ? Esq.fuenteI(40, 150, 40, 80, 'IF1', n(Math.abs(I1), 1) + ' mA', -1) : Esq.fuenteI(40, 80, 40, 150, 'IF1', n(Math.abs(I1), 1) + ' mA', -1),
+            Esq.R(120, 40, 120, 190, 'R1', n(R1, 1) + ' kΩ', 1),
+            Esq.R(170, 40, 230, 40, 'R3', n(R3, 1) + ' kΩ', 1),
+            Esq.R(260, 40, 260, 190, 'R2', n(R2, 1) + ' kΩ', -1),
+            I2 >= 0 ? Esq.fuenteI(340, 150, 340, 80, 'IF2', n(Math.abs(I2), 1) + ' mA', 1) : Esq.fuenteI(340, 80, 340, 150, 'IF2', n(Math.abs(I2), 1) + ' mA', 1),
+            Esq.nodo(120, 40), Esq.nodo(260, 40), Esq.nodo(120, 190), Esq.nodo(260, 190),
+            Esq.cable([[120, 40], [170, 40]]), Esq.cable([[230, 40], [260, 40]]),
+            Esq.texto(120, 22, 'V1 = ' + n(V1, 2) + ' V', { color: 'var(--c2)', size: 12 }), Esq.texto(275, 22, 'V2 = ' + n(V2, 2) + ' V', { color: 'var(--c4)', size: 12 }),
+            flecha3, Esq.masa(190, 190),
+          ]);
+          lec.set([
+            { k: 'V1', v: n(V1) + ' V' },
+            { k: 'V2', v: n(V2) + ' V' },
+            { k: 'I por R1 (↓)', v: n(IR1) + ' mA', estado: IR1 < 0 ? 'alerta' : '' },
+            { k: 'I por R2 (↓)', v: n(IR2) + ' mA', estado: IR2 < 0 ? 'alerta' : '' },
+            { k: 'I por R3 (1 → 2)', v: n(IR3) + ' mA', estado: IR3 < 0 ? 'alerta' : '' },
+            { k: 'Control nodo 1', v: n(I1, 2) + ' = ' + n(IR1 + IR3, 2) + ' ✓', estado: 'ok' },
+          ]);
+          pasos.innerHTML = String.raw`<b>Sistema (conductancias en mS, corrientes en mA):</b>
+            $$\begin{cases}${L(a)}\,V_1 - ${L(-b)}\,V_2 = ${L(I1, 2)}\\ -${L(-c)}\,V_1 + ${L(d)}\,V_2 = ${L(I2, 2)}\end{cases}$$
+            $$\Delta = ${L(a)}\cdot${L(d)} - (${L(b)})(${L(c)}) = ${L(D, 4)}$$
+            $$V_1=\frac{${L(I1, 2)}\cdot${L(d)} - (${L(b)})\cdot${L(I2, 2)}}{${L(D, 4)}} = ${L(V1)}\,\text{V}$$
+            $$V_2=\frac{${L(a)}\cdot${L(I2, 2)} - (${L(c)})\cdot${L(I1, 2)}}{${L(D, 4)}} = ${L(V2)}\,\text{V}$$
+            ${IR3 < 0 ? '<p><b>La corriente por R3 dio negativa:</b> en realidad circula del nodo 2 al nodo 1 (V2 &gt; V1). La flecha verde del esquema ya muestra el sentido real.</p>' : ''}
+            ${(V1 < 0 || V2 < 0) ? '<p><b>Hay una tensión de nodo negativa:</b> ese nodo está por debajo de la masa. Es perfectamente posible cuando una fuente de corriente “saca” corriente del nodo.</p>' : ''}`;
+          if (window.renderMathInElement) renderMathInElement(pasos, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false });
+        }
+        upd();
+      },
+    },
+    ],
 
   ejercicios: [
     {
@@ -253,7 +367,37 @@ El divisor de tensión que polariza la base de un transistor (tema 14) se simpli
       pista: String.raw`$V_{th}$ es la salida sin carga. Para $R_{th}$ cortocircuitá la fuente: quedan $R_1$ y $R_2$ en paralelo.`,
       solucion: String.raw`$V_{th}=12\cdot\frac{10}{57}=2{,}105\,\text{V}$; $R_{th}=\frac{47\cdot10}{57}=8{,}25\,\text{k}\Omega$. $I_L=\frac{2{,}105}{8{,}25+22}=69{,}6\,\mu\text{A}$ y $V_L=1{,}53\,\text{V}$.`,
     },
-  ],
+    {
+      nivel: 'Básico',
+      enunciado: String.raw`Una fuente de corriente de $12\,\text{mA}$ alimenta dos resistencias en paralelo, $R_1=1\,\text{k}\Omega$ y $R_2=3\,\text{k}\Omega$ (un solo nodo además de masa). Planteá la ecuación de nodo y calculá la tensión del nodo y la corriente por cada resistencia.`,
+      pista: String.raw`Un solo nodo: $I_F=\frac{V}{R_1}+\frac{V}{R_2}$. Sacá $V$ factor común.`,
+      solucion: String.raw`$12=V\left(\frac11+\frac13\right)=1{,}333\,V\Rightarrow V=9\,\text{V}$. $I_{R1}=\frac{9}{1}=9\,\text{mA}$, $I_{R2}=\frac93=3\,\text{mA}$. Control: $9+3=12\,\text{mA}$ ✓ (es el divisor de corriente: la R más chica se lleva más corriente).`,
+    },
+    {
+      nivel: 'Intermedio',
+      enunciado: String.raw`Resolvé por nodos el circuito de la teoría con $I_{F1}=3{,}1\,\text{mA}$, $I_{F2}=1{,}4\,\text{mA}$, $R_1=2\,\text{k}\Omega$, $R_2=4\,\text{k}\Omega$, $R_3=5\,\text{k}\Omega$. Calculá $V_1$, $V_2$ y las corrientes en las tres resistencias. Verificá LKC en el nodo 2.`,
+      pista: String.raw`Diagonal: $\frac1{R_1}+\frac1{R_3}$ y $\frac1{R_2}+\frac1{R_3}$; fuera de la diagonal $-\frac1{R_3}$. $\Delta=0{,}275$.`,
+      solucion: String.raw`$\begin{cases}0{,}7V_1-0{,}2V_2=3{,}1\\-0{,}2V_1+0{,}45V_2=1{,}4\end{cases}$, $\Delta=0{,}275$. $V_1=\frac{3{,}1\cdot0{,}45+0{,}2\cdot1{,}4}{0{,}275}=6{,}09\,\text{V}$; $V_2=\frac{0{,}7\cdot1{,}4+0{,}2\cdot3{,}1}{0{,}275}=5{,}82\,\text{V}$. $I_{R1}=3{,}05\,\text{mA}$, $I_{R2}=1{,}45\,\text{mA}$, $I_{R3}=0{,}055\,\text{mA}$ (de 1 a 2). Nodo 2: entran $1{,}4+0{,}055=1{,}455\,\text{mA}$ y sale $I_{R2}=1{,}455\,\text{mA}$ ✓.`,
+    },
+    {
+      nivel: 'Intermedio',
+      enunciado: String.raw`En el mismo circuito, la fuente $I_{F2}$ se da vuelta (ahora <b>saca</b> 1,4 mA del nodo 2). ¿Qué cambia en el sistema? Calculá de nuevo $V_1$ y $V_2$. ¿Hacia dónde circula ahora la corriente por $R_3$?`,
+      pista: String.raw`Solo cambia el signo del término independiente del nodo 2: $-1{,}4$. La matriz (y $\Delta$) quedan iguales.`,
+      solucion: String.raw`$V_1=\frac{3{,}1\cdot0{,}45+0{,}2\cdot(-1{,}4)}{0{,}275}=\frac{1{,}395-0{,}28}{0{,}275}=4{,}05\,\text{V}$; $V_2=\frac{0{,}7\cdot(-1{,}4)+0{,}2\cdot3{,}1}{0{,}275}=\frac{-0{,}98+0{,}62}{0{,}275}=-1{,}31\,\text{V}$. $I_{R3}=\frac{4{,}05-(-1{,}31)}{5}=1{,}07\,\text{mA}$ de 1 hacia 2. El nodo 2 quedó <b>por debajo de masa</b>: la fuente le saca más corriente de la que le llega. Verificalo en la simulación poniendo IF2 = −1,4 mA.`,
+    },
+    {
+      nivel: 'Intermedio',
+      enunciado: String.raw`Una batería de $9\,\text{V}$ con una resistencia en serie de $1\,\text{k}\Omega$ alimenta un nodo del que salen a masa $R_2=2\,\text{k}\Omega$ y $R_3=2\,\text{k}\Omega$. Transformá la fuente en una fuente de corriente y resolvé por nodos. Compará con el divisor de tensión.`,
+      pista: String.raw`Transformación: $I=\frac{9\,\text{V}}{1\,\text{k}\Omega}=9\,\text{mA}$ con $1\,\text{k}\Omega$ en paralelo.`,
+      solucion: String.raw`Queda una fuente de 9 mA y tres resistencias en paralelo (1 k, 2 k y 2 k): $9=V\left(1+\frac12+\frac12\right)=2V\Rightarrow V=4{,}5\,\text{V}$. Con el divisor: $R_2\parallel R_3=1\,\text{k}\Omega$, $V=9\cdot\frac{1}{1+1}=4{,}5\,\text{V}$ ✓. Mismo resultado por dos caminos.`,
+    },
+    {
+      nivel: 'Avanzado',
+      enunciado: String.raw`En el circuito de la teoría ($R_1=2\,\text{k}\Omega$, $R_2=4\,\text{k}\Omega$, $R_3=5\,\text{k}\Omega$, $I_{F2}=1{,}4\,\text{mA}$), ¿qué valor tiene que tener $I_{F1}$ para que <b>no circule corriente por $R_3$</b>? Pensalo antes de hacer cuentas.`,
+      pista: String.raw`Si $I_{R3}=0$, entonces $V_1=V_2$, y cada fuente alimenta solo “su” resistencia.`,
+      solucion: String.raw`Con $I_{R3}=0$ los nodos quedan desacoplados: $V_2=I_{F2}\cdot R_2=1{,}4\cdot4=5{,}6\,\text{V}$. Para que $V_1=5{,}6\,\text{V}$: $I_{F1}=\frac{5{,}6}{R_1}=\frac{5{,}6}{2}=2{,}8\,\text{mA}$. Comprobalo en la simulación: con IF1 = 2,8 mA la corriente por R3 da 0.`,
+    },
+    ],
 
   quiz: [
     { pregunta: 'En un circuito serie, ¿qué magnitud es igual en todos los componentes?', opciones: ['La tensión', 'La corriente', 'La potencia', 'La resistencia'], correcta: 1, explicacion: 'Hay un solo camino, así que la corriente es la misma en todos; las tensiones se reparten.' },
@@ -261,7 +405,12 @@ El divisor de tensión que polariza la base de un transistor (tema 14) se simpli
     { pregunta: String.raw`Si en un divisor $R_1=R_2$ y $V_{in}=10\,\text{V}$, sin carga $V_{out}$ vale…`, opciones: ['10 V', '5 V', '2,5 V', '0 V'], correcta: 1, explicacion: 'Con resistencias iguales la tensión se reparte a la mitad.' },
     { pregunta: 'Al resolver por mallas, una corriente da negativa. Eso significa que…', opciones: ['Hay un error de cálculo seguro', 'La corriente real circula en sentido contrario al supuesto', 'La fuente está en cortocircuito', 'La resistencia es negativa'], correcta: 1, explicacion: 'El signo indica el sentido. El método sigue siendo correcto.' },
     { pregunta: 'Para calcular la resistencia de Thévenin, las fuentes de tensión se reemplazan por…', opciones: ['Un circuito abierto', 'Un cortocircuito', 'Una resistencia de 1 kΩ', 'No se tocan'], correcta: 1, explicacion: 'Una fuente de tensión ideal apagada (0 V) es un cable: cortocircuito. Las de corriente se abren.' },
-  ],
+    { pregunta: 'En el método de nodos, las incógnitas son…', opciones: ['Las corrientes de malla', 'Las tensiones de los nodos respecto de la referencia', 'Las resistencias', 'Las potencias'], correcta: 1, explicacion: 'Se elige un nodo de referencia (0 V) y se calculan las tensiones de los demás nodos. Con ellas sale cualquier corriente: I = ΔV/R.' },
+    { pregunta: 'Un circuito tiene 4 nodos. ¿Cuántas ecuaciones de nodo hay que plantear?', opciones: ['4', '3', '2', 'Depende de las mallas'], correcta: 1, explicacion: 'Con n nodos hay n − 1 incógnitas: uno de ellos es la referencia y vale 0 V.' },
+    { pregunta: String.raw`En el sistema de nodos, el coeficiente de $V_1$ en la ecuación del nodo 1 es…`, opciones: ['La suma de las resistencias conectadas al nodo 1', 'La suma de las conductancias (1/R) conectadas al nodo 1', 'Menos la conductancia entre los nodos 1 y 2', 'La corriente de la fuente'], correcta: 1, explicacion: 'En la diagonal va la suma de 1/R de todas las ramas que tocan ese nodo; fuera de la diagonal, menos la conductancia que une los dos nodos.' },
+    { pregunta: '¿Cuándo conviene usar nodos en vez de mallas?', opciones: ['Cuando hay muchas fuentes de tensión', 'Cuando hay fuentes de corriente y pocos nodos', 'Nunca, mallas siempre es mejor', 'Solo si no hay resistencias'], correcta: 1, explicacion: 'Las fuentes de corriente entran directo en el término independiente de la ecuación de nodo. Con mallas complican el planteo.' },
+    { pregunta: 'Al resolver, V2 da un valor negativo. Eso significa que…', opciones: ['Hay un error seguro', 'El nodo 2 está a menor tensión que la referencia', 'La resistencia R2 es negativa', 'La fuente está rota'], correcta: 1, explicacion: 'Es perfectamente posible: si una fuente de corriente saca corriente del nodo, este puede quedar por debajo de masa.' },
+    ],
 
   docente: String.raw`
 <h3>Objetivo de la clase</h3>
@@ -288,5 +437,16 @@ El divisor de tensión que polariza la base de un transistor (tema 14) se simpli
 </ul>
 <h3>Recordatorio rápido para vos</h3>
 <p>Cramer 2×2: $\begin{vmatrix}a&b\\c&d\end{vmatrix}=ad-bc$. $I_1$ = reemplazás la 1.ª columna por los términos independientes; $I_2$ = la 2.ª.</p>
+
+<h3>Ampliación: método de nodos (sección 7 de la teoría)</h3>
+<p><b>Por qué está:</b> en la carpeta (clase del 6/3) se resolvió un circuito con dos fuentes de corriente por nodos y Cramer ($\Delta=11/40$, $V_1=6{,}09\,\text{V}$, $V_2=5{,}82\,\text{V}$). <b>Duración sugerida:</b> 30–40 min.</p>
+<ol>
+<li><b>Arranque (5 min):</b> preguntá “¿qué pasa si en vez de una pila tengo una fuente que entrega siempre 3 mA, haga lo que haga?”. Presentá el símbolo de la fuente de corriente (círculo con flecha) y aclarale que la tensión en sus bornes la decide el resto del circuito.</li>
+<li><b>Receta (10 min):</b> los 5 pasos. Remarcá que todo sale de LKC + Ohm escrito con <b>diferencias</b> de tensión.</li>
+<li><b>Ejemplo de la carpeta (10 min):</b> hacelo en el pizarrón con kΩ y mA. Que el alumno arme la matriz con el “truco” (diagonal = suma de 1/R; afuera = −1/R común).</li>
+<li><b>Simulación (10 min):</b> invertí IF2 y que prediga qué pasa con V2 antes de mirar. Buscá juntos el valor de IF1 que anula la corriente en R3 (2,8 mA).</li>
+</ol>
+<p><b>Errores frecuentes:</b> escribir $\frac{V_1}{R_3}$ en vez de $\frac{V_1-V_2}{R_3}$; cambiar los signos de las fuentes; usar Ω y A mezclados con kΩ y mA.</p>
+<p><b>Repaso para vos:</b> conductancia $G=1/R$ (siemens). Cramer 2×2: $\Delta=ad-bc$, $x=\frac{e\,d-b\,f}{\Delta}$, $y=\frac{a\,f-c\,e}{\Delta}$. Transformación de fuentes: $V$ en serie con $R$ ⇔ $I=V/R$ en paralelo con $R$.</p>
 `,
 });
